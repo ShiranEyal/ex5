@@ -1,4 +1,4 @@
-package pepse.util.src;
+package pepse.util.pepse;
 
 import danogl.GameManager;
 import danogl.gui.ImageReader;

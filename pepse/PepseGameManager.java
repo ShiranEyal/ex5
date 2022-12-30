@@ -10,8 +10,11 @@ import danogl.gui.WindowController;
 import danogl.util.Vector2;
 import pepse.util.pepse.world.Sky;
 import pepse.util.pepse.world.Terrain;
+import pepse.util.pepse.world.daynight.Night;
+import pepse.util.pepse.world.daynight.Sun;
 
 public class PepseGameManager extends GameManager {
+    private static final float DAY_CYCLE_LENGTH = 30f;
     /**
      * override initializeGame method in gamemanger
      * @param imageReader Contains a single method: readImage, which reads an image from disk.
@@ -35,6 +38,11 @@ public class PepseGameManager extends GameManager {
         //create ground blocks
         Terrain T = new Terrain(this.gameObjects(), Layer.DEFAULT, windowSize, 0);
         T.createInRange(0, (int) windowSize.x());
+        //create night and sun
+        Night.create(gameObjects(), Layer.FOREGROUND, windowController.getWindowDimensions(),
+                DAY_CYCLE_LENGTH);
+        Sun.create(gameObjects(), Layer.BACKGROUND + 1, windowController.getWindowDimensions(),
+                DAY_CYCLE_LENGTH);
     }
 
     /**

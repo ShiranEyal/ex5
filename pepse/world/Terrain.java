@@ -4,7 +4,9 @@ import danogl.collisions.GameObjectCollection;
 import danogl.gui.rendering.RectangleRenderable;
 import danogl.gui.rendering.Renderable;
 import danogl.util.Vector2;
+import pepse.util.pepse.PepseGameManager;
 import pepse.util.pepse.util.ColorSupplier;
+import pepse.util.pepse.util.NoiseGenerator;
 
 import java.awt.*;
 
@@ -16,12 +18,16 @@ public class Terrain {
     private static final float GROUND_HEIGHT_AMOUNT = 2f/3f;
     //ground color
     private static final Color BASE_GROUND_COLOR = new Color(212, 123, 74);
-    //top left corner
-    private static final Vector2 TOP_LEFT_CORNER = new Vector2(0, 0);
+    //terrain depth
+    private static final int TERRAIN_DEPTH = 20;
+    //noise amplifier
+    private static final int NOISE_AMP = 5;
+
     private GameObjectCollection gameObjects;
     private int groundLayer;
     private Vector2 windowDimensions;
     private float groundHeightAtX0;
+    private NoiseGenerator noiseGenerator;
 
     /**
      * Terrain object constructor
@@ -37,6 +43,7 @@ public class Terrain {
         this.groundLayer = groundLayer;
         this.windowDimensions = windowDimensions;
         this.groundHeightAtX0 = GROUND_HEIGHT_AMOUNT * this.windowDimensions.y();
+        this.noiseGenerator = new NoiseGenerator(seed);
     }
 
     /**
@@ -45,7 +52,8 @@ public class Terrain {
      * @return height of ground at x
      */
     public float groundHeightAt(float x) {
-        return groundHeightAtX0;
+        double noise = (noiseGenerator.noise(x));
+        return (float) (groundHeightAtX0 + noise * Block.SIZE * NOISE_AMP);
     }
 
     /**
@@ -57,14 +65,13 @@ public class Terrain {
         int x = getClosestX(minX);
         Renderable blockRenderable = new RectangleRenderable(ColorSupplier.approximateColor(BASE_GROUND_COLOR));
         while (x < maxX) {
-            float groundHeightAtx = groundHeightAt(x);
-            float y = windowDimensions.y();
-            while (y > groundHeightAtx) {
-                Block b = new Block(TOP_LEFT_CORNER, blockRenderable);
-                b.setCenter(new Vector2(x + Block.SIZE/2, y - Block.SIZE/2));
+            double y = Math.floor(groundHeightAt(x) / Block.SIZE) * Block.SIZE;
+            for (int i = 0; i < TERRAIN_DEPTH; i++) {
+                Block b = new Block(PepseGameManager.TOP_LEFT_CORNER, blockRenderable);
+                b.setCenter(new Vector2(x + Block.SIZE/2, (float) y - Block.SIZE/2));
                 b.setTag("Ground");
                 gameObjects.addGameObject(b);
-                y -= Block.SIZE;
+                y += Block.SIZE;
             }
             x += Block.SIZE;
         }
@@ -73,7 +80,7 @@ public class Terrain {
     helper function to get closest x to starting x that is
     divisable by blockSize
      */
-    private int getClosestX(int minX) {
+    public int getClosestX(int minX) {
         if (minX < 0) {
             return Block.SIZE * ((int) (minX/Block.SIZE + 1));
         }

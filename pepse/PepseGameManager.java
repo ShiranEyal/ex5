@@ -17,6 +17,9 @@ import pepse.util.pepse.world.Sky;
 import pepse.util.pepse.world.Terrain;
 import pepse.util.pepse.world.daynight.Night;
 import pepse.util.pepse.world.daynight.Sun;
+import pepse.util.pepse.world.daynight.SunHalo;
+
+import java.awt.*;
 
 import java.awt.*;
 import java.util.Random;
@@ -33,6 +36,8 @@ public class PepseGameManager extends GameManager {
     private static WindowController windowController;
     private Avatar avatar;
     private static Terrain terrain;
+    private static final Color SUN_HALO_COLOR = new Color(255, 255, 0, 20);
+
     /**
      * override initializeGame method in gamemanger
      * @param imageReader Contains a single method: readImage, which reads an image from disk.
@@ -62,11 +67,13 @@ public class PepseGameManager extends GameManager {
         //create night and sun
         Night.create(gameObjects(), Layer.FOREGROUND, windowSize,
                 DAY_CYCLE_LENGTH);
-        Sun.create(gameObjects(), Layer.BACKGROUND + 1, windowSize,
-                DAY_CYCLE_LENGTH);
         //create avatar
         this.avatar = create(gameObjects(), Layer.DEFAULT, TOP_LEFT_CORNER,
                 inputListener, imageReader);
+
+        GameObject sun = Sun.create(gameObjects(), Layer.BACKGROUND + 1, windowController.getWindowDimensions(),
+                DAY_CYCLE_LENGTH);
+        SunHalo.create(gameObjects(), Layer.BACKGROUND + 10, sun, SUN_HALO_COLOR);
     }
 
     /**

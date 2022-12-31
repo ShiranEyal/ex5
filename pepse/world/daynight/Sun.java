@@ -32,7 +32,7 @@ public class Sun {
     }
 
     private static Vector2 calcSunPosition(Vector2 windowDimensions, float angleInSky) {
-        float horizontalRadius = (windowDimensions.x() / 2) - SUN_SIZE;
+        float horizontalRadius = (windowDimensions.x() / 2) - 2 * SUN_SIZE;
         float verticalRadius = (windowDimensions.y() / 2) - SUN_SIZE;
         Vector2 windowCenter = windowDimensions.mult(0.5f);
 

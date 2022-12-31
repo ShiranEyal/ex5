@@ -54,19 +54,16 @@ public class Terrain {
      * @param maxX
      */
     public void createInRange(int minX, int maxX) {
-        int x = getClosestX(minX);
+
         Renderable blockRenderable = new RectangleRenderable(ColorSupplier.approximateColor(BASE_GROUND_COLOR));
-        while (x < maxX) {
+        for (int x = getClosestX(minX); x < maxX; x += Block.SIZE) {
             float groundHeightAtx = groundHeightAt(x);
-            float y = windowDimensions.y();
-            while (y > groundHeightAtx) {
+            for (float y = windowDimensions.y(); y > groundHeightAtx; y -= Block.SIZE) {
                 Block b = new Block(TOP_LEFT_CORNER, blockRenderable);
                 b.setCenter(new Vector2(x + Block.SIZE/2, y - Block.SIZE/2));
                 b.setTag("Ground");
-                gameObjects.addGameObject(b);
-                y -= Block.SIZE;
+                gameObjects.addGameObject(b, groundLayer);
             }
-            x += Block.SIZE;
         }
     }
     /*
@@ -75,9 +72,9 @@ public class Terrain {
      */
     private int getClosestX(int minX) {
         if (minX < 0) {
-            return Block.SIZE * ((int) (minX/Block.SIZE + 1));
+            return Block.SIZE * (minX/Block.SIZE + 1);
         }
-        return Block.SIZE * ((int) (minX/Block.SIZE));
+        return Block.SIZE * (minX/Block.SIZE);
     }
 
 }

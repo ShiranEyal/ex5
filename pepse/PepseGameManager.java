@@ -37,17 +37,15 @@ public class PepseGameManager extends GameManager {
     public void initializeGame(ImageReader imageReader, SoundReader soundReader,
                                UserInputListener inputListener, WindowController windowController) {
         super.initializeGame(imageReader, soundReader, inputListener, windowController);
-        //create sky
-        Sky sky = new Sky();
         Vector2 windowSize = windowController.getWindowDimensions();
-        sky.create(this.gameObjects(), windowSize, Layer.BACKGROUND);
+        //create sky
+        Sky.create(this.gameObjects(), windowSize, Layer.BACKGROUND);
         //create ground blocks
         Terrain T = new Terrain(this.gameObjects(), Layer.DEFAULT, windowSize, 0);
         T.createInRange(0, (int) windowSize.x());
         //create night and sun
-        Night.create(gameObjects(), Layer.FOREGROUND, windowController.getWindowDimensions(),
-                DAY_CYCLE_LENGTH);
-        GameObject sun = Sun.create(gameObjects(), Layer.BACKGROUND + 1, windowController.getWindowDimensions(),
+        Night.create(gameObjects(), Layer.FOREGROUND, windowSize, DAY_CYCLE_LENGTH);
+        GameObject sun = Sun.create(gameObjects(), Layer.BACKGROUND + 1, windowSize,
                 DAY_CYCLE_LENGTH);
         SunHalo.create(gameObjects(), Layer.BACKGROUND + 10, sun, SUN_HALO_COLOR);
     }

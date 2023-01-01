@@ -1,7 +1,6 @@
 package pepse.util.pepse.world.trees;
 
 import danogl.collisions.GameObjectCollection;
-import danogl.components.GameObjectPhysics;
 import danogl.components.ScheduledTask;
 import danogl.components.Transition;
 import danogl.gui.rendering.RectangleRenderable;
@@ -24,8 +23,7 @@ public class Tree {
     private static final float MIN_LEAF_LIFETIME = 10f;
     private static final float MAX_LEAF_LIFETIME = 300f;
     private static final float MAX_DEATH_LIFETIME = 40f;
-    private static final float LEAF_FADEOUT_TIME = 15f;
-    private static final float LEAF_FALL_VELOCITY = 20;
+    private static final float LEAF_FADEOUT_TIME = 25f;
 
     private final Random random;
     private final Terrain terrain;
@@ -81,7 +79,7 @@ public class Tree {
                 new ScheduledTask(leaf, leafTransitionsDelay, false, () -> leafWindTransitions(leaf));
 
                 // start the life cycle
-                resetLeaf(leaf, leaf.getTopLeftCorner());
+                resetLeafAndScheduleKill(leaf);
 
                 gameObjects.addGameObject(leaf, layer + 1);
             }
@@ -89,25 +87,17 @@ public class Tree {
     }
 
 
-    private void resetLeaf (Leaf leaf, Vector2 originalPosition) {
-        leaf.transform().setTopLeftCorner(originalPosition);
-        leaf.renderer().setOpaqueness(1);
-
+    private void resetLeafAndScheduleKill(Leaf leaf) {
+        leaf.reset();
         new ScheduledTask(leaf, random.nextFloat(MIN_LEAF_LIFETIME, MAX_LEAF_LIFETIME),
-                false, () -> killLeaf(leaf));
+                false, () -> killLeafAndScheduleReset(leaf));
     }
 
-    private void killLeaf(Leaf leaf) {
-        Vector2 leafOriginalPosition = leaf.transform().getTopLeftCorner().getImmutableCopy();
-        leaf.transform().setVelocityY(LEAF_FALL_VELOCITY);
-
-        leaf.setHorizontalTransition(new Transition<>(
-                leaf, x -> leaf.transform().setVelocityX(x), -3f,
-                3f, Transition.LINEAR_INTERPOLATOR_FLOAT, 7,
-                Transition.TransitionType.TRANSITION_BACK_AND_FORTH, null));
-
-        Runnable resetLeafEndOfFadeOut =  () -> new ScheduledTask(leaf, random.nextFloat(MAX_DEATH_LIFETIME),
-                false, () -> resetLeaf(leaf, leafOriginalPosition));
+    private void killLeafAndScheduleReset(Leaf leaf) {
+        leaf.kill();
+        Runnable resetLeafEndOfFadeOut =
+                () -> new ScheduledTask(leaf, random.nextFloat(MAX_DEATH_LIFETIME),
+                false, () -> resetLeafAndScheduleKill(leaf));
         leaf.renderer().fadeOut(LEAF_FADEOUT_TIME, resetLeafEndOfFadeOut);
     }
 

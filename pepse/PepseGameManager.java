@@ -31,7 +31,7 @@ public class PepseGameManager extends GameManager {
     private static final int SUN_HALO_LAYER = Layer.BACKGROUND + 10;
     private static final int TREE_TRUNK_LAYER = Layer.DEFAULT + 10;
     private static final int LEAVES_LAYER = TREE_TRUNK_LAYER + 1;
-    private static final int AVATAR_LAYER = Layer.DEFAULT;
+    private static final int AVATAR_LAYER = Layer.DEFAULT + 20;
 
 
 
@@ -78,8 +78,8 @@ public class PepseGameManager extends GameManager {
 
         Vector2 windowSize = windowController.getWindowDimensions();
 
-        seed = new Random().nextInt();
-//        seed = 0;
+//        seed = new Random().nextInt();
+        seed = 2;
 
         //create sky
         Sky.create(this.gameObjects(), windowSize, SKY_LAYER);
@@ -99,27 +99,30 @@ public class PepseGameManager extends GameManager {
         Tree tree = new Tree(gameObjects(), TREE_TRUNK_LAYER, terrain, seed);
         tree.createInRange(0, (int) windowSize.x());
 
+        // enable collisions between leaves and first two ground layers
+        gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, TERRAIN_LAYER, true);
+        gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, TERRAIN_LAYER - 1, true);
+
         // create avatar
         // using ScheduledTask to delay it so the engine will have time to compute the
         // collisions with the ground.
+        new ScheduledTask(sun, CREATE_AVATAR_DELAY, false, this::initAvatar);
+    }
+
+    private void initAvatar() {
+        avatar = Avatar.create(gameObjects(), AVATAR_LAYER,
+                INITIAL_AVATAR_POS, inputListener, imageReader);
+
         // according to the given signature of Avatar.create function we can't pass the
         // SoundReader and this is the reason to the wierd "activateJumpingSound" function.
-        new ScheduledTask(sun, CREATE_AVATAR_DELAY, false,
-                () -> { avatar = Avatar.create(gameObjects(), AVATAR_LAYER,
-                        INITIAL_AVATAR_POS, inputListener, imageReader);
-                        avatar.activateJumpingSound(soundReader); }
-        );
+        avatar.activateJumpingSound(soundReader);
 
-
-        // enable collisions between leaves and first two ground layers
-        gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, TERRAIN_LAYER, true);
-        gameObjects().layers().shouldLayersCollide(AVATAR_LAYER, TERRAIN_LAYER - 1, true);
-        // enable collisions between tree trunk and avatar
+        // enable collisions between trees and avatar
         gameObjects().layers().shouldLayersCollide(TREE_TRUNK_LAYER, AVATAR_LAYER, true);
+        gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, AVATAR_LAYER, true);
         // enable collisions between avatar and first two ground layers
         gameObjects().layers().shouldLayersCollide(AVATAR_LAYER, TERRAIN_LAYER, true);
         gameObjects().layers().shouldLayersCollide(AVATAR_LAYER, TERRAIN_LAYER - 1, true);
-
     }
 
 

@@ -87,11 +87,11 @@ public class Avatar extends GameObject {
                 imageReader.readImage(WOOPDEEDOO4, false)}, WOOPDEEDOO_ANIMATION_TIME);
     }
 
-    @Override
-    public void onCollisionEnter(GameObject other, Collision collision) {
-        super.onCollisionEnter(other, collision);
-
-    }
+//    @Override
+//    public void onCollisionEnter(GameObject other, Collision collision) {
+//        super.onCollisionEnter(other, collision);
+//
+//    }
 
     private void updateVelocityX() {
         float xVel = 0;
@@ -114,6 +114,8 @@ public class Avatar extends GameObject {
             renderer().setRenderable(FLYING_JUMPING_ANIMATION);
         }
     }
+
+
 
     private void updateVelocityYAndEnergy() {
         if(inputListener.isKeyPressed(KeyEvent.VK_SPACE) && getVelocity().y() == 0) {

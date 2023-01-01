@@ -1,6 +1,7 @@
 package pepse.util.pepse.world.trees;
 
 import danogl.collisions.GameObjectCollection;
+import danogl.components.GameObjectPhysics;
 import danogl.components.ScheduledTask;
 import danogl.components.Transition;
 import danogl.gui.rendering.RectangleRenderable;
@@ -12,8 +13,8 @@ import java.awt.*;
 import java.util.Random;
 
 public class Tree {
-    private static final int MIN_TREE_HEIGHT = Block.SIZE * 4;
-    private static final int MAX_TREE_HEIGHT = Block.SIZE * 8;
+    private static final int MIN_TREE_HEIGHT = Block.SIZE * 5;
+    private static final int MAX_TREE_HEIGHT = Block.SIZE * 10;
 
     private static final Color TREE_TRUNK_COLOR = new Color(100, 50, 20);
     private static final Color TREE_LEAF_COLOR = new Color(50, 200, 30);
@@ -21,20 +22,17 @@ public class Tree {
     private static final String TREE_LEAF_TAG = "tree leaf";
     private static final int MAX_LEAF_DELAY = 5;
     private static final float MIN_LEAF_LIFETIME = 10f;
-    private static final float MAX_LEAF_LIFETIME = 120f;
+    private static final float MAX_LEAF_LIFETIME = 300f;
     private static final float MAX_DEATH_LIFETIME = 40f;
     private static final float LEAF_FADEOUT_TIME = 15f;
     private static final float LEAF_FALL_VELOCITY = 20;
 
-    private Vector2 windowDimensions;
     private final Random random;
     private final Terrain terrain;
     private final GameObjectCollection gameObjects;
     private final int layer;
 
-    public Tree(GameObjectCollection gameObjects, int layer, Vector2 windowDimensions,
-                Terrain terrain, int seed) {
-        this.windowDimensions = windowDimensions;
+    public Tree(GameObjectCollection gameObjects, int layer, Terrain terrain, int seed) {
         random = new Random(seed);
         this.terrain = terrain;
         this.gameObjects = gameObjects;
@@ -43,7 +41,7 @@ public class Tree {
     }
 
     public void createInRange(int minX, int maxX) {
-        int firstBlockX = (minX / Block.SIZE) * (Block.SIZE + 1);
+        int firstBlockX = (minX / Block.SIZE) * (Block.SIZE);
         for (int curX = firstBlockX; curX <= maxX; curX += Block.SIZE) {
             if (random.nextInt(10) == 0) {
                 createTreeInX(curX);
@@ -55,8 +53,8 @@ public class Tree {
     private void createTreeInX(int x) {
         int treeHeight = random.nextInt(MIN_TREE_HEIGHT, MAX_TREE_HEIGHT);
         int terrainHeightInPixels = (int)(Math.floor(terrain.groundHeightAt(x)) / Block.SIZE) * Block.SIZE;
-        int firstTrunkBlockY = terrainHeightInPixels - Block.SIZE;
-        int lastTrunkBlockY = terrainHeightInPixels -  treeHeight - Block.SIZE;
+        int firstTrunkBlockY = terrainHeightInPixels - 2 * Block.SIZE;
+        int lastTrunkBlockY = terrainHeightInPixels -  treeHeight - 2 * Block.SIZE;
         createTreeTrunk(x, firstTrunkBlockY, lastTrunkBlockY);
         createTreeLeaves(x, lastTrunkBlockY);
     }
@@ -72,16 +70,17 @@ public class Tree {
 
 
     private void createTreeLeaves(int centerX, int centerY) {
-        for (int curX = centerX - Block.SIZE * 2; curX < centerX + Block.SIZE * 3; curX += Block.SIZE) {
-            for (int curY = centerY - Block.SIZE * 3; curY < centerY + Block.SIZE * 3; curY += Block.SIZE) {
+        for (int curX = centerX - Block.SIZE * 2; curX <= centerX + Block.SIZE * 2;
+             curX += Block.SIZE) {
+            for (int curY = centerY - Block.SIZE * 2; curY <= centerY + Block.SIZE * 2; curY += Block.SIZE) {
                 Leaf leaf = new Leaf(new Vector2(curX, curY), new RectangleRenderable(TREE_LEAF_COLOR));
                 leaf.setTag(TREE_LEAF_TAG);
 
                 // leaf wind movement after random time
-                float leafTransitionsDelay = random.nextFloat(MAX_LEAF_DELAY) ;
+                float leafTransitionsDelay = random.nextFloat(MAX_LEAF_DELAY);
                 new ScheduledTask(leaf, leafTransitionsDelay, false, () -> leafWindTransitions(leaf));
 
-                // kill leaf after random time
+                // start the life cycle
                 resetLeaf(leaf, leaf.getTopLeftCorner());
 
                 gameObjects.addGameObject(leaf, layer + 1);
@@ -92,7 +91,7 @@ public class Tree {
 
     private void resetLeaf (Leaf leaf, Vector2 originalPosition) {
         leaf.transform().setTopLeftCorner(originalPosition);
-        leaf.renderer().fadeIn(0);
+        leaf.renderer().setOpaqueness(1);
 
         new ScheduledTask(leaf, random.nextFloat(MIN_LEAF_LIFETIME, MAX_LEAF_LIFETIME),
                 false, () -> killLeaf(leaf));
@@ -122,8 +121,6 @@ public class Tree {
                 (float)Block.SIZE, (float) Block.SIZE - 3, Transition.LINEAR_INTERPOLATOR_FLOAT,
                 7, Transition.TransitionType.TRANSITION_BACK_AND_FORTH, null);
     }
-
-
 }
 
 

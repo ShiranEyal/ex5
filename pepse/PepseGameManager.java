@@ -2,14 +2,12 @@ package pepse.util.pepse;
 
 import danogl.GameManager;
 import danogl.GameObject;
-import danogl.collisions.GameObjectCollection;
 import danogl.collisions.Layer;
+import danogl.components.ScheduledTask;
 import danogl.gui.ImageReader;
 import danogl.gui.SoundReader;
 import danogl.gui.UserInputListener;
 import danogl.gui.WindowController;
-import danogl.gui.rendering.RectangleRenderable;
-import danogl.gui.rendering.Renderable;
 import danogl.util.Vector2;
 import pepse.util.pepse.world.Avatar;
 import pepse.util.pepse.world.Block;
@@ -21,33 +19,40 @@ import pepse.util.pepse.world.daynight.SunHalo;
 import pepse.util.pepse.world.trees.Tree;
 
 import java.awt.*;
-
-import java.awt.*;
 import java.util.Random;
 
 public class PepseGameManager extends GameManager {
 
-    private static final float DAY_CYCLE_LENGTH = 60f;
-    private static final Color SUN_HALO_COLOR = new Color(255, 255, 0, 20);
-
-    //avatar size
-    private static final int AVATAR_SIZE= 30;
-    //Y_ACC
-    private static final int Y_ACC = 500;
-    //top left corner
-    public static final Vector2 TOP_LEFT_CORNER = new Vector2(0, 0);
-
-    private static WindowController windowController;
-    private Avatar avatar;
-    private static Terrain terrain;
-
     ////// Layers Constants //////
-    public static final int SKY_LAYER = Layer.BACKGROUND;
-    public static final int TERRAIN_LAYER = Layer.DEFAULT;
-    public static final int NIGHT_LAYER = Layer.FOREGROUND;
+    private static final int SKY_LAYER = Layer.BACKGROUND;
+    private static final int TERRAIN_LAYER = Layer.DEFAULT;
+    private static final int NIGHT_LAYER = Layer.FOREGROUND;
     private static final int SUN_LAYER = Layer.BACKGROUND + 1;
     private static final int SUN_HALO_LAYER = Layer.BACKGROUND + 10;
-    private static final int TREE_LAYER = Layer.DEFAULT + 10;
+    private static final int TREE_TRUNK_LAYER = Layer.DEFAULT + 10;
+    private static final int LEAVES_LAYER = TREE_TRUNK_LAYER + 1;
+    private static final int AVATAR_LAYER = Layer.DEFAULT;
+
+
+
+    private static final float DAY_CYCLE_LENGTH = 60f;
+    private static final Color SUN_HALO_COLOR = new Color(255, 255, 0, 20);
+    private static final Vector2 INITIAL_AVATAR_POS = new Vector2(25 * Block.SIZE, -50);
+    private static final float CREATE_AVATAR_DELAY = 1f;
+
+    private Terrain terrain;
+    private Avatar avatar;
+
+    private int seed;
+
+
+    private WindowController windowController;
+    private UserInputListener inputListener;
+    private ImageReader imageReader;
+    private SoundReader soundReader;
+
+
+
 
     /**
      * override initializeGame method in gamemanger
@@ -65,18 +70,24 @@ public class PepseGameManager extends GameManager {
     public void initializeGame(ImageReader imageReader, SoundReader soundReader,
                                UserInputListener inputListener, WindowController windowController) {
         super.initializeGame(imageReader, soundReader, inputListener, windowController);
+        windowController.setTargetFramerate(80);
         this.windowController = windowController;
+        this.inputListener = inputListener;
+        this.imageReader = imageReader;
+        this.soundReader = soundReader;
+
         Vector2 windowSize = windowController.getWindowDimensions();
+
+        seed = new Random().nextInt();
+//        seed = 0;
 
         //create sky
         Sky.create(this.gameObjects(), windowSize, SKY_LAYER);
 
         //create ground blocks
-        Random rand  = new Random();
-        Terrain T = new Terrain(this.gameObjects(), Layer.DEFAULT, windowSize, rand.nextInt());
+        Terrain T = new Terrain(this.gameObjects(), Layer.DEFAULT, windowSize, seed);
         T.createInRange(0, (int) windowSize.x());
-        this.terrain = T;
-
+        terrain = T;
 
         //create night and sun
         Night.create(gameObjects(), NIGHT_LAYER, windowSize, DAY_CYCLE_LENGTH);
@@ -85,39 +96,32 @@ public class PepseGameManager extends GameManager {
         SunHalo.create(gameObjects(), SUN_HALO_LAYER, sun, SUN_HALO_COLOR);
 
         //create trees
-        Tree tree = new Tree(gameObjects(), TREE_LAYER, windowSize, terrain, 0);
+        Tree tree = new Tree(gameObjects(), TREE_TRUNK_LAYER, terrain, seed);
         tree.createInRange(0, (int) windowSize.x());
-        gameObjects().layers().shouldLayersCollide(TREE_LAYER + 1, TERRAIN_LAYER, true);
 
-        //create avatar
-        this.avatar = create(gameObjects(), Layer.DEFAULT, TOP_LEFT_CORNER,
-                inputListener, imageReader);
+        // create avatar
+        // using ScheduledTask to delay it so the engine will have time to compute the
+        // collisions with the ground.
+        // according to the given signature of Avatar.create function we can't pass the
+        // SoundReader and this is the reason to the wierd "activateJumpingSound" function.
+        new ScheduledTask(sun, CREATE_AVATAR_DELAY, false,
+                () -> { avatar = Avatar.create(gameObjects(), AVATAR_LAYER,
+                        INITIAL_AVATAR_POS, inputListener, imageReader);
+                        avatar.activateJumpingSound(soundReader); }
+        );
+
+
+        // enable collisions between leaves and first two ground layers
+        gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, TERRAIN_LAYER, true);
+        gameObjects().layers().shouldLayersCollide(AVATAR_LAYER, TERRAIN_LAYER - 1, true);
+        // enable collisions between tree trunk and avatar
+        gameObjects().layers().shouldLayersCollide(TREE_TRUNK_LAYER, AVATAR_LAYER, true);
+        // enable collisions between avatar and first two ground layers
+        gameObjects().layers().shouldLayersCollide(AVATAR_LAYER, TERRAIN_LAYER, true);
+        gameObjects().layers().shouldLayersCollide(AVATAR_LAYER, TERRAIN_LAYER - 1, true);
+
     }
 
-    /**
-     * create avatar character
-     * @param gameObjects
-     * @param layer
-     * @param topLeftCorner
-     * @param inputListener
-     * @param imageReader
-     * @return
-     */
-    public static Avatar create(GameObjectCollection gameObjects,
-                                int layer, Vector2 topLeftCorner,
-                                UserInputListener inputListener,
-                                ImageReader imageReader) {
-        Renderable avatarImg = new RectangleRenderable(Color.BLUE);
-        Avatar avatar = new Avatar(topLeftCorner, new Vector2(AVATAR_SIZE, AVATAR_SIZE),
-                avatarImg, inputListener);
-        int x_pos = (int) windowController.getWindowDimensions().x() / 2;
-        int y_pos = (int) windowController.getWindowDimensions().y() / 2;
-        avatar.setCenter(new Vector2(x_pos, y_pos));
-        avatar.transform().setAcceleration(Vector2.DOWN.multY(Y_ACC));
-        avatar.physics().preventIntersectionsFromDirection(Vector2.ZERO);
-        gameObjects.addGameObject(avatar, layer);
-        return avatar;
-    }
 
     /**
      * main function

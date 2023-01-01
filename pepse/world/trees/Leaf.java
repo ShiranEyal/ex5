@@ -23,6 +23,7 @@ public class Leaf extends Block {
 
     public void setHorizontalTransition(Transition<Float> horizontalTransition) {
         this.horizontalTransition = horizontalTransition;
+        physics().setMass(0);
     }
 
     @Override

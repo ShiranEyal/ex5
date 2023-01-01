@@ -3,7 +3,6 @@ package pepse.util.pepse;
 import danogl.GameManager;
 import danogl.GameObject;
 import danogl.collisions.Layer;
-import danogl.components.ScheduledTask;
 import danogl.gui.ImageReader;
 import danogl.gui.SoundReader;
 import danogl.gui.UserInputListener;
@@ -38,11 +37,13 @@ public class PepseGameManager extends GameManager {
 
     private static final float DAY_CYCLE_LENGTH = 60f;
     private static final Color SUN_HALO_COLOR = new Color(255, 255, 0, 20);
-    private static final float INITIAL_AVATAR_X_POS = 25 * Block.SIZE;
+    private static final int INITIAL_AVATAR_X_POS = 25 * Block.SIZE;
     private static final float CREATE_AVATAR_DELAY = 1f;
+    private static final int WORLD_CREATION_BUFFER_SIZE = 4 * Block.SIZE;
 
     private Terrain terrain;
     private Avatar avatar;
+    private Tree tree;
 
     private int seed;
 
@@ -51,7 +52,6 @@ public class PepseGameManager extends GameManager {
     private UserInputListener inputListener;
     private ImageReader imageReader;
     private SoundReader soundReader;
-
 
 
 
@@ -76,49 +76,40 @@ public class PepseGameManager extends GameManager {
         this.inputListener = inputListener;
         this.imageReader = imageReader;
         this.soundReader = soundReader;
-
-        Vector2 windowSize = windowController.getWindowDimensions();
-
         seed = new Random().nextInt();
 //        seed = 0;
 
+        Vector2 windowSize = windowController.getWindowDimensions();
         //create sky
         Sky.create(this.gameObjects(), windowSize, SKY_LAYER);
-
         //create ground blocks
-        Terrain T = new Terrain(this.gameObjects(), Layer.DEFAULT, windowSize, seed);
-        T.createInRange(0, (int) windowSize.x());
-        terrain = T;
-
-        for (int i = 0; i < 13; i++) {
-            gameObjects().layers().shouldLayersCollide(TERRAIN_LAYER - i,
-                    TERRAIN_LAYER - i, false);
-            gameObjects().layers().shouldLayersCollide(TERRAIN_LAYER - i,
-                    TERRAIN_LAYER - i - 1, false);
-        }
-
-
+        terrain = new Terrain(this.gameObjects(), Layer.DEFAULT, windowSize, seed);
+        terrain.createInRange(0, (int) windowSize.x());
         //create night and sun
-        Night.create(gameObjects(), NIGHT_LAYER, windowSize, DAY_CYCLE_LENGTH);
-        GameObject sun = Sun.create(gameObjects(), SUN_LAYER, windowSize,
+        initializeDayNightCycle();
+        //create trees
+        initializeTree();
+        // create avatar
+        initializeAvatar();
+    }
+
+    private void initializeDayNightCycle() {
+        Night.create(gameObjects(), NIGHT_LAYER,
+                windowController.getWindowDimensions(), DAY_CYCLE_LENGTH);
+        GameObject sun = Sun.create(gameObjects(),
+                SUN_LAYER, windowController.getWindowDimensions(),
                 DAY_CYCLE_LENGTH);
         SunHalo.create(gameObjects(), SUN_HALO_LAYER, sun, SUN_HALO_COLOR);
+    }
 
-        //create trees
-        Tree tree = new Tree(gameObjects(), TREE_TRUNK_LAYER, terrain, seed);
-        tree.createInRange(0, (int) windowSize.x());
+    private void initializeTree() {
+        tree = new Tree(gameObjects(), TREE_TRUNK_LAYER, terrain, seed);
+        tree.createInRange(0, (int) windowController.getWindowDimensions().x());
 
         // enable collisions between leaves and first two ground layers
         gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, TERRAIN_LAYER, true);
         gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, TERRAIN_LAYER - 1, true);
-
-        // create avatar
-        // using ScheduledTask to delay it so the engine will have time to compute the
-        // collisions with the ground.
-        new ScheduledTask(sun, CREATE_AVATAR_DELAY, false, this::initializeAvatar);
-//        initAvatar();
     }
-
     private void initializeAvatar() {
         Vector2 initialPos = new Vector2(INITIAL_AVATAR_X_POS,
                 terrain.groundHeightAt(INITIAL_AVATAR_X_POS) - 5 * Block.SIZE);
@@ -132,6 +123,7 @@ public class PepseGameManager extends GameManager {
         // enable collisions between trees and avatar
         gameObjects().layers().shouldLayersCollide(TREE_TRUNK_LAYER, AVATAR_LAYER, true);
         gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, AVATAR_LAYER, true);
+
         // enable collisions between avatar and first two ground layers
         gameObjects().layers().shouldLayersCollide(AVATAR_LAYER, TERRAIN_LAYER, true);
         gameObjects().layers().shouldLayersCollide(AVATAR_LAYER, TERRAIN_LAYER - 1, true);
@@ -140,7 +132,6 @@ public class PepseGameManager extends GameManager {
         setCamera(new Camera(avatar, Vector2.ZERO, windowController.getWindowDimensions(),
                 windowController.getWindowDimensions()));
     }
-
 
     /**
      * main function

@@ -5,11 +5,13 @@ import danogl.components.ScheduledTask;
 import danogl.components.Transition;
 import danogl.gui.rendering.RectangleRenderable;
 import danogl.util.Vector2;
+import pepse.util.pepse.util.NoiseGenerator;
 import pepse.util.pepse.world.Block;
 import pepse.util.pepse.world.Terrain;
 
 import java.awt.*;
 import java.util.Random;
+import java.util.function.Function;
 
 public class Tree {
     private static final int MIN_TREE_HEIGHT = Block.SIZE * 5;
@@ -30,20 +32,21 @@ public class Tree {
     private final GameObjectCollection gameObjects;
     private final int layer;
 
+//    private final Function<Float, Float> plantTree;
+
     public Tree(GameObjectCollection gameObjects, int layer, Terrain terrain, int seed) {
         random = new Random(seed);
         this.terrain = terrain;
         this.gameObjects = gameObjects;
         this.layer = layer;
-
     }
 
     public void createInRange(int minX, int maxX) {
         int firstBlockX = (minX / Block.SIZE) * (Block.SIZE);
-        for (int curX = firstBlockX; curX <= maxX; curX += Block.SIZE) {
+        for (int curX = firstBlockX; curX < maxX; curX += Block.SIZE) {
             if (random.nextInt(10) == 0) {
                 createTreeInX(curX);
-                curX += 3 * Block.SIZE; // this line makes sure that the trees aren't too close each other.
+                curX += 5 * Block.SIZE; // this line makes sure that the trees aren't too close each other.
             }
         }
     }
@@ -89,6 +92,7 @@ public class Tree {
 
     private void resetLeafAndScheduleKill(Leaf leaf) {
         leaf.reset();
+        leaf.renderer().setOpaqueness(1);
         new ScheduledTask(leaf, random.nextFloat(MIN_LEAF_LIFETIME, MAX_LEAF_LIFETIME),
                 false, () -> killLeafAndScheduleReset(leaf));
     }

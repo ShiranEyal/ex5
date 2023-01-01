@@ -62,6 +62,5 @@ public class Leaf extends Block {
         isOnTree = true;
         transform().setTopLeftCorner(originalPosition);
         physics().setMass(GameObjectPhysics.IMMOVABLE_MASS);
-        renderer().setOpaqueness(1);
     }
 }

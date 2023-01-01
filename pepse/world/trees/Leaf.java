@@ -9,10 +9,11 @@ import danogl.util.Vector2;
 import pepse.util.pepse.world.Avatar;
 import pepse.util.pepse.world.Block;
 
-import java.awt.desktop.AppHiddenEvent;
-
 public class Leaf extends Block {
     private static final float LEAF_FALL_VELOCITY = 20;
+    private static final Float HORIZONTAL_TRANSITION_MIN_VEL = -10f;
+    private static final Float HORIZONTAL_TRANSITION_MAX_VEL = 7f;
+    private static final float HORIZONTAL_TRANSITION_TIME = 7;
     private Transition<Float> horizontalTransition;
     private boolean isOnTree;
     private final Vector2 originalPosition;
@@ -51,8 +52,9 @@ public class Leaf extends Block {
         transform().setVelocityY(LEAF_FALL_VELOCITY);
         physics().setMass(0);
         horizontalTransition = new Transition<>(
-                this, x -> transform().setVelocityX(x), -10f,
-                10f, Transition.LINEAR_INTERPOLATOR_FLOAT, 7,
+                this, x -> transform().setVelocityX(x),
+                HORIZONTAL_TRANSITION_MIN_VEL, HORIZONTAL_TRANSITION_MAX_VEL,
+                Transition.LINEAR_INTERPOLATOR_FLOAT, HORIZONTAL_TRANSITION_TIME,
                 Transition.TransitionType.TRANSITION_BACK_AND_FORTH, null);
     }
 

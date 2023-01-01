@@ -16,10 +16,14 @@ import java.awt.event.KeyEvent;
 public class Avatar extends GameObject {
 
     private static final String ICY_TOWER_IMG_PATH = "assets/IcyTowerGuy.png";
-    private static final String WOOPDEEDOO1 = "assets/woopdeedoo.png";
-    private static final String WOOPDEEDOO2 = "assets/woopdeedoo2.png";
-    private static final String WOOPDEEDOO3 = "assets/woopdeedoo3.png";
-    private static final String WOOPDEEDOO4 = "assets/woopdeedoo4.png";
+//    private static final String WOOPDEEDOO1 = "assets/woopdeedoo.png";
+//    private static final String WOOPDEEDOO2 = "assets/woopdeedoo2.png";
+//    private static final String WOOPDEEDOO3 = "assets/woopdeedoo3.png";
+//    private static final String WOOPDEEDOO4 = "assets/woopdeedoo4.png";
+    private static final String WOOPDEEDOO1 = "assets/woopdeedoo1_no_bg.png";
+    private static final String WOOPDEEDOO2 = "assets/woopdeedoo2_no_bg.png";
+    private static final String WOOPDEEDOO3 = "assets/woopdeedoo3_no_bg.png";
+    private static final String WOOPDEEDOO4 = "assets/woopdeedoo4_no_bg.png";
     private static final String JUMPING_SOUND = "assets/icy-tower-woopdeedoo_sound.wav";
     private static final double WOOPDEEDOO_ANIMATION_TIME = 0.1;
 
@@ -81,17 +85,11 @@ public class Avatar extends GameObject {
     public static void loadRenderables(ImageReader imageReader) {
         ICY_TOWER_RENDERABLE = imageReader.readImage(ICY_TOWER_IMG_PATH, true);
         FLYING_JUMPING_ANIMATION = new AnimationRenderable(new Renderable[]{
-                imageReader.readImage(WOOPDEEDOO1, false),
-                imageReader.readImage(WOOPDEEDOO2, false),
-                imageReader.readImage(WOOPDEEDOO3, false),
-                imageReader.readImage(WOOPDEEDOO4, false)}, WOOPDEEDOO_ANIMATION_TIME);
+                imageReader.readImage(WOOPDEEDOO1, true),
+                imageReader.readImage(WOOPDEEDOO2, true),
+                imageReader.readImage(WOOPDEEDOO3, true),
+                imageReader.readImage(WOOPDEEDOO4, true)}, WOOPDEEDOO_ANIMATION_TIME);
     }
-
-//    @Override
-//    public void onCollisionEnter(GameObject other, Collision collision) {
-//        super.onCollisionEnter(other, collision);
-//
-//    }
 
     private void updateVelocityX() {
         float xVel = 0;

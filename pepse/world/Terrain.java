@@ -22,7 +22,7 @@ public class Terrain {
     //ground color
     private static final Color BASE_GROUND_COLOR = new Color(212, 123, 74);
     //terrain depth
-    private static final int TERRAIN_DEPTH = 13;
+    private static final int TERRAIN_DEPTH = 14;
     //noise amplifier
     private static final int NOISE_AMP = 5;
 

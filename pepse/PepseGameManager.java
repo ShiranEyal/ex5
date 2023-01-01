@@ -8,6 +8,7 @@ import danogl.gui.ImageReader;
 import danogl.gui.SoundReader;
 import danogl.gui.UserInputListener;
 import danogl.gui.WindowController;
+import danogl.gui.rendering.Camera;
 import danogl.util.Vector2;
 import pepse.util.pepse.world.Avatar;
 import pepse.util.pepse.world.Block;
@@ -37,7 +38,7 @@ public class PepseGameManager extends GameManager {
 
     private static final float DAY_CYCLE_LENGTH = 60f;
     private static final Color SUN_HALO_COLOR = new Color(255, 255, 0, 20);
-    private static final Vector2 INITIAL_AVATAR_POS = new Vector2(25 * Block.SIZE, -50);
+    private static final float INITIAL_AVATAR_X_POS = 25 * Block.SIZE;
     private static final float CREATE_AVATAR_DELAY = 1f;
 
     private Terrain terrain;
@@ -78,8 +79,8 @@ public class PepseGameManager extends GameManager {
 
         Vector2 windowSize = windowController.getWindowDimensions();
 
-//        seed = new Random().nextInt();
-        seed = 2;
+        seed = new Random().nextInt();
+//        seed = 0;
 
         //create sky
         Sky.create(this.gameObjects(), windowSize, SKY_LAYER);
@@ -88,6 +89,14 @@ public class PepseGameManager extends GameManager {
         Terrain T = new Terrain(this.gameObjects(), Layer.DEFAULT, windowSize, seed);
         T.createInRange(0, (int) windowSize.x());
         terrain = T;
+
+        for (int i = 0; i < 13; i++) {
+            gameObjects().layers().shouldLayersCollide(TERRAIN_LAYER - i,
+                    TERRAIN_LAYER - i, false);
+            gameObjects().layers().shouldLayersCollide(TERRAIN_LAYER - i,
+                    TERRAIN_LAYER - i - 1, false);
+        }
+
 
         //create night and sun
         Night.create(gameObjects(), NIGHT_LAYER, windowSize, DAY_CYCLE_LENGTH);
@@ -106,12 +115,15 @@ public class PepseGameManager extends GameManager {
         // create avatar
         // using ScheduledTask to delay it so the engine will have time to compute the
         // collisions with the ground.
-        new ScheduledTask(sun, CREATE_AVATAR_DELAY, false, this::initAvatar);
+        new ScheduledTask(sun, CREATE_AVATAR_DELAY, false, this::initializeAvatar);
+//        initAvatar();
     }
 
-    private void initAvatar() {
+    private void initializeAvatar() {
+        Vector2 initialPos = new Vector2(INITIAL_AVATAR_X_POS,
+                terrain.groundHeightAt(INITIAL_AVATAR_X_POS) - 5 * Block.SIZE);
         avatar = Avatar.create(gameObjects(), AVATAR_LAYER,
-                INITIAL_AVATAR_POS, inputListener, imageReader);
+                initialPos, inputListener, imageReader);
 
         // according to the given signature of Avatar.create function we can't pass the
         // SoundReader and this is the reason to the wierd "activateJumpingSound" function.
@@ -123,6 +135,10 @@ public class PepseGameManager extends GameManager {
         // enable collisions between avatar and first two ground layers
         gameObjects().layers().shouldLayersCollide(AVATAR_LAYER, TERRAIN_LAYER, true);
         gameObjects().layers().shouldLayersCollide(AVATAR_LAYER, TERRAIN_LAYER - 1, true);
+
+        // focus camera on the avatar
+        setCamera(new Camera(avatar, Vector2.ZERO, windowController.getWindowDimensions(),
+                windowController.getWindowDimensions()));
     }
 
 

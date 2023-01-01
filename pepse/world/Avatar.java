@@ -88,7 +88,8 @@ public class Avatar extends GameObject {
                 imageReader.readImage(WOOPDEEDOO1, true),
                 imageReader.readImage(WOOPDEEDOO2, true),
                 imageReader.readImage(WOOPDEEDOO3, true),
-                imageReader.readImage(WOOPDEEDOO4, true)}, WOOPDEEDOO_ANIMATION_TIME);
+                imageReader.readImage(WOOPDEEDOO4, true)},
+                WOOPDEEDOO_ANIMATION_TIME);
     }
 
     private void updateVelocityX() {
@@ -104,7 +105,6 @@ public class Avatar extends GameObject {
         if (transform().getVelocity().y() != 0) { return; }
 
         renderer().setRenderable(ICY_TOWER_RENDERABLE);
-
         if (inputListener.isKeyPressed(KeyEvent.VK_SPACE)) {
             if (flyingAndJumpingSound != null) {
                 flyingAndJumpingSound.play();

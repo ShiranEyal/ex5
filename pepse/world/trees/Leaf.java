@@ -41,6 +41,9 @@ public class Leaf extends Block {
 
     @Override
     public boolean shouldCollideWith(GameObject other) {
+        if (other instanceof Leaf) {
+            return false;
+        }
         if (other instanceof Avatar && !isOnTree) {
             return false;
         }
@@ -62,5 +65,6 @@ public class Leaf extends Block {
         isOnTree = true;
         transform().setTopLeftCorner(originalPosition);
         physics().setMass(GameObjectPhysics.IMMOVABLE_MASS);
+        transform().setVelocity(Vector2.ZERO);
     }
 }

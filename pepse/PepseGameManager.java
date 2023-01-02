@@ -165,7 +165,6 @@ public class PepseGameManager extends GameManager {
         // focus camera on the avatar
         setCamera(new Camera(avatar, Vector2.ZERO, windowController.getWindowDimensions(),
                 windowController.getWindowDimensions()));
-
     }
 
     @Override

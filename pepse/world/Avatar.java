@@ -24,7 +24,7 @@ public class Avatar extends GameObject {
     private static final String FLYING_ANIMATION2_PATH = "assets/woopdeedoo2_no_bg.png";
     private static final String FLYING_ANIMATION3_PATH = "assets/woopdeedoo3_no_bg.png";
     private static final String FLYING_ANIMATION4_PATH = "assets/woopdeedoo4_no_bg.png";
-    private static final String JUMPING_SOUND_PATH = "assets/icy-tower-woopdeedoo_sound.wav";
+    private static final String JUMPING_SOUND_PATH = "assets/icy-tower-woopdeedoo_sound_better.wav";
     private static final double FLYING_ANIMATION_TIME = 0.1;
     private static final Vector2 AVATAR_DIMENSIONS = new Vector2(25, 50);
     private static final float VELOCITY_X = 150;

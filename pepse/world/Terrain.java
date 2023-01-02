@@ -1,6 +1,7 @@
 package pepse.util.pepse.world;
 
 import danogl.collisions.GameObjectCollection;
+import danogl.collisions.Layer;
 import danogl.gui.rendering.RectangleRenderable;
 import danogl.gui.rendering.Renderable;
 import danogl.util.Vector2;
@@ -9,6 +10,8 @@ import pepse.util.pepse.util.ColorSupplier;
 import pepse.util.pepse.util.NoiseGenerator;
 
 import java.awt.*;
+import java.util.function.DoubleUnaryOperator;
+import java.util.function.Function;
 
 /**
  * Terrain class, used to create ground blocks
@@ -62,18 +65,16 @@ public class Terrain {
      * @param maxX
      */
     public void createInRange(int minX, int maxX) {
-        int x = getClosestX(minX);
-        Renderable blockRenderable = new RectangleRenderable(ColorSupplier.approximateColor(BASE_GROUND_COLOR));
-        while (x < maxX) {
+        for (int x = getClosestX(minX); x < maxX; x += Block.SIZE) {
             double y = Math.floor(groundHeightAt(x) / Block.SIZE) * Block.SIZE;
             for (int i = 0; i < TERRAIN_DEPTH; i++) {
-                Block b = new Block(PepseGameManager.TOP_LEFT_CORNER, blockRenderable);
+                Block b = new Block(Vector2.ZERO,
+                        new RectangleRenderable(ColorSupplier.approximateColor(BASE_GROUND_COLOR)));
                 b.setCenter(new Vector2(x + Block.SIZE/2, (float) y - Block.SIZE/2));
                 b.setTag("Ground");
-                gameObjects.addGameObject(b);
+                gameObjects.addGameObject(b, groundLayer - i);
                 y += Block.SIZE;
             }
-            x += Block.SIZE;
         }
     }
     /*
@@ -82,9 +83,9 @@ public class Terrain {
      */
     public int getClosestX(int minX) {
         if (minX < 0) {
-            return Block.SIZE * ((int) (minX/Block.SIZE + 1));
+            return Block.SIZE * (minX/Block.SIZE + 1);
         }
-        return Block.SIZE * ((int) (minX/Block.SIZE));
+        return Block.SIZE * (minX/Block.SIZE);
     }
 
 }

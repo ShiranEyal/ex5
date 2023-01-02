@@ -28,7 +28,8 @@ public class Night {
                 0f,
                 MIDNIGHT_OPACITY,
                 Transition.CUBIC_INTERPOLATOR_FLOAT,
-                cycleLength / 2, Transition.TransitionType.TRANSITION_BACK_AND_FORTH, null);
+                cycleLength / 2, Transition.TransitionType.TRANSITION_BACK_AND_FORTH,
+                null);
         return night;
     }
 }

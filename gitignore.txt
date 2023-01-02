@@ -1,2 +1,5 @@
 #ignore .idea folder
 .idea
+
+#ignore out folder
+out

@@ -1,5 +1,7 @@
 package pepse.util.pepse.util;
 
+import pepse.util.pepse.world.Block;
+
 import java.util.Random;
 
 public class NoiseGenerator {
@@ -97,6 +99,7 @@ public class NoiseGenerator {
     }
 
     public double noise(double x) {
+        x = x / 20;
         double value = 0.0;
         double size = default_size;
         double initialSize = size;

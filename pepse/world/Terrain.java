@@ -10,6 +10,9 @@ import pepse.util.pepse.util.ColorSupplier;
 import pepse.util.pepse.util.NoiseGenerator;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
 
@@ -31,6 +34,7 @@ public class Terrain {
     private Vector2 windowDimensions;
     private float groundHeightAtX0;
     private NoiseGenerator noiseGenerator;
+    private static HashMap<Integer, List<Block>> xToBlocks = new HashMap<>();
 
     /**
      * Terrain object constructor
@@ -67,6 +71,7 @@ public class Terrain {
     public void createInRange(int minX, int maxX) {
         for (int x = getClosestX(minX); x < maxX; x += Block.SIZE) {
             double y = Math.floor(groundHeightAt(x) / Block.SIZE) * Block.SIZE;
+            List<Block> blocksList = new ArrayList<>();
             for (int i = 0; i < TERRAIN_DEPTH; i++) {
                 Block b = new Block(Vector2.ZERO,
                         new RectangleRenderable(ColorSupplier.approximateColor(BASE_GROUND_COLOR)));
@@ -74,7 +79,29 @@ public class Terrain {
                 b.setTag("Ground");
                 gameObjects.addGameObject(b, groundLayer - i);
                 y += Block.SIZE;
+                blocksList.add(b);
             }
+            xToBlocks.put(x, blocksList);
+        }
+    }
+
+    /**
+     * removes all ground blocks in certain x position
+     * @param x
+     */
+    public void removeXBlocks(int x) {
+        int realX = getClosestX(x);
+        int i = 0;
+//        if(xToBlocks.get(realX) != null) {
+//            for (Block b : xToBlocks.get(realX)) {
+//                gameObjects.removeGameObject(b, groundLayer - i);
+//                i++;
+//            }
+//            xToBlocks.remove(realX);
+//        }
+        for (Block b : xToBlocks.get(realX)) {
+            gameObjects.removeGameObject(b, groundLayer - i);
+            i++;
         }
     }
     /*
@@ -83,7 +110,7 @@ public class Terrain {
      */
     public int getClosestX(int minX) {
         if (minX < 0) {
-            return Block.SIZE * (minX/Block.SIZE + 1);
+            return Block.SIZE * (minX/Block.SIZE - 1);
         }
         return Block.SIZE * (minX/Block.SIZE);
     }

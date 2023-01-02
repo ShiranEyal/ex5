@@ -40,6 +40,7 @@ public class PepseGameManager extends GameManager {
     private static final int INITIAL_AVATAR_X_POS = 25 * Block.SIZE;
     private static final float CREATE_AVATAR_DELAY = 1f;
     private static final int WORLD_CREATION_BUFFER_SIZE = 4 * Block.SIZE;
+    private static final int CREATE_AVATAR_Y_OFFSET = 5;
 
     private Terrain terrain;
     private Avatar avatar;
@@ -52,7 +53,6 @@ public class PepseGameManager extends GameManager {
     private UserInputListener inputListener;
     private ImageReader imageReader;
     private SoundReader soundReader;
-
 
 
     /**
@@ -112,7 +112,7 @@ public class PepseGameManager extends GameManager {
     }
     private void initializeAvatar() {
         Vector2 initialPos = new Vector2(INITIAL_AVATAR_X_POS,
-                terrain.groundHeightAt(INITIAL_AVATAR_X_POS) - 5 * Block.SIZE);
+                terrain.groundHeightAt(INITIAL_AVATAR_X_POS) - CREATE_AVATAR_Y_OFFSET * Block.SIZE);
         avatar = Avatar.create(gameObjects(), AVATAR_LAYER,
                 initialPos, inputListener, imageReader);
 
@@ -131,6 +131,44 @@ public class PepseGameManager extends GameManager {
         // focus camera on the avatar
         setCamera(new Camera(avatar, Vector2.ZERO, windowController.getWindowDimensions(),
                 windowController.getWindowDimensions()));
+    }
+
+    /**
+     * Override PepseGameManager update function for infinite render
+     * @param deltaTime The time, in seconds, that passed since the last invocation
+     *                  of this method (i.e., since the last frame). This is useful
+     *                  for either accumulating the total time that passed since some
+     *                  event, or for physics integration (i.e., multiply this by
+     *                  the acceleration to get an estimate of the added velocity or
+     *                  by the velocity to get an estimate of the difference in position).
+     */
+    @Override
+    public void update(float deltaTime) {
+        super.update(deltaTime);
+        //check if need to update blocks on screen
+        float avatarX = avatar.getCenter().x();
+        int xPosInBlocks = avatar.getXPosInBlocks();
+        int minBlocksPos = (int) (avatarX - windowController.getWindowDimensions().x()/2);
+        int maxBlocksPos = (int) (avatarX + windowController.getWindowDimensions().x()/2);
+        if (xPosInBlocks < (int) avatarX/Block.SIZE) {
+            terrain.removeXBlocks(minBlocksPos);
+            terrain.createInRange(maxBlocksPos, maxBlocksPos + Block.SIZE);
+            avatar.setXPosInBlocks(xPosInBlocks + 1);
+//            updateTerrain(minBlocksPos, maxBlocksPos, xPosInBlocks);
+        }
+        if (xPosInBlocks > (int) avatarX/Block.SIZE) {
+            terrain.removeXBlocks(maxBlocksPos);
+            terrain.createInRange(minBlocksPos - Block.SIZE, minBlocksPos);
+            avatar.setXPosInBlocks(xPosInBlocks - 1);
+//            updateTerrain(maxBlocksPos, minBlocksPos - Block.SIZE, xPosInBlocks);
+        }
+    }
+
+    //helper function to remove ground blocks from terrain
+    private void updateTerrain(int posToRemove, int posToAdd, int xPosInBlocks) {
+        terrain.removeXBlocks(posToRemove);
+        terrain.createInRange(posToAdd, posToAdd + Block.SIZE);
+        avatar.setXPosInBlocks(xPosInBlocks - 1);
     }
 
     /**

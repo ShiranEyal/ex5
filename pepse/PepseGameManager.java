@@ -38,9 +38,9 @@ public class PepseGameManager extends GameManager {
     private static final float DAY_CYCLE_LENGTH = 60f;
     private static final Color SUN_HALO_COLOR = new Color(255, 255, 0, 20);
     private static final int INITIAL_AVATAR_X_POS = 25 * Block.SIZE;
-    private static final float CREATE_AVATAR_DELAY = 1f;
+    private static final float CREATE_AVATAR_DELAY = 5f;
     private static final int WORLD_CREATION_BUFFER_SIZE = 4 * Block.SIZE;
-    private static final int CREATE_AVATAR_Y_OFFSET = 5;
+    private static final int CREATE_AVATAR_Y_OFFSET = 15;
 
     private Terrain terrain;
     private Avatar avatar;

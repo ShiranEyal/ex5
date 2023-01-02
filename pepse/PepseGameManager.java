@@ -23,6 +23,9 @@ import java.util.Random;
 
 public class PepseGameManager extends GameManager {
 
+    ////// Frame Target //////
+    private static final int FRAME_TARGET = 80;
+
     ////// Layers Constants //////
     private static final int SKY_LAYER = Layer.BACKGROUND;
     private static final int TERRAIN_LAYER = Layer.DEFAULT;
@@ -34,25 +37,35 @@ public class PepseGameManager extends GameManager {
     private static final int AVATAR_LAYER = Layer.DEFAULT + 20;
 
 
-
+    ////// Day Night Cycle initialization constants  //////
     private static final float DAY_CYCLE_LENGTH = 60f;
     private static final Color SUN_HALO_COLOR = new Color(255, 255, 0, 20);
+
+
+    ////// Avatar initialization constants //////
     private static final int INITIAL_AVATAR_X_POS = 25 * Block.SIZE;
-    private static final float CREATE_AVATAR_DELAY = 1f;
-    private static final int WORLD_CREATION_BUFFER_SIZE = 4 * Block.SIZE;
     private static final int CREATE_AVATAR_Y_OFFSET = 5;
 
-    private Terrain terrain;
-    private Avatar avatar;
-    private Tree tree;
 
-    private int seed;
-
-
+    ////// initializeGame parameters //////
     private WindowController windowController;
     private UserInputListener inputListener;
     private ImageReader imageReader;
     private SoundReader soundReader;
+
+
+    ////// world generation fields //////
+    private static final int CHUNK_SIZE = 20 * Block.SIZE;
+    private int halfWindowWidth;
+    private int seed;
+    private int lowestRenderedX;
+    private int highestRenderedX;
+
+
+    ////// game objects generators //////
+    private Terrain terrain;
+    private Avatar avatar;
+    private Tree tree;
 
 
     /**
@@ -69,28 +82,45 @@ public class PepseGameManager extends GameManager {
      */
     @Override
     public void initializeGame(ImageReader imageReader, SoundReader soundReader,
-                               UserInputListener inputListener, WindowController windowController) {
+                               UserInputListener inputListener,
+                               WindowController windowController) {
         super.initializeGame(imageReader, soundReader, inputListener, windowController);
-        windowController.setTargetFramerate(80);
-        this.windowController = windowController;
-        this.inputListener = inputListener;
-        this.imageReader = imageReader;
-        this.soundReader = soundReader;
-        seed = new Random().nextInt();
-//        seed = 0;
+        windowController.setTargetFramerate(FRAME_TARGET);
+        Vector2 windowDimensions = windowController.getWindowDimensions();
 
-        Vector2 windowSize = windowController.getWindowDimensions();
+        // save the parameters of this method into field
+        saveInitializeGameParameters(imageReader, soundReader, inputListener, windowController);
+
+        // initialize general fields that deals with the world generation
+        initializeWorldGenerationFields(windowDimensions);
+
         //create sky
-        Sky.create(this.gameObjects(), windowSize, SKY_LAYER);
+        Sky.create(this.gameObjects(), windowDimensions, SKY_LAYER);
         //create ground blocks
-        terrain = new Terrain(this.gameObjects(), Layer.DEFAULT, windowSize, seed);
-        terrain.createInRange(0, (int) windowSize.x());
+        terrain = new Terrain(this.gameObjects(), Layer.DEFAULT, windowDimensions, seed);
+        terrain.createInRange(lowestRenderedX, highestRenderedX);
         //create night and sun
         initializeDayNightCycle();
         //create trees
         initializeTree();
         // create avatar
         initializeAvatar();
+    }
+
+    private void saveInitializeGameParameters(ImageReader imageReader, SoundReader soundReader,
+                                              UserInputListener inputListener,
+                                              WindowController windowController) {
+        this.windowController = windowController;
+        this.inputListener = inputListener;
+        this.imageReader = imageReader;
+        this.soundReader = soundReader;
+    }
+
+    private void initializeWorldGenerationFields(Vector2 windowDimensions) {
+        seed = new Random().nextInt();
+        lowestRenderedX = -CHUNK_SIZE;
+        highestRenderedX = (int) windowDimensions.x() + CHUNK_SIZE;
+        halfWindowWidth = (int) windowDimensions.x() / 2;
     }
 
     private void initializeDayNightCycle() {
@@ -104,15 +134,19 @@ public class PepseGameManager extends GameManager {
 
     private void initializeTree() {
         tree = new Tree(gameObjects(), TREE_TRUNK_LAYER, terrain, seed);
-        tree.createInRange(0, (int) windowController.getWindowDimensions().x());
+        tree.createInRange(lowestRenderedX, highestRenderedX);
 
         // enable collisions between leaves and first two ground layers
         gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, TERRAIN_LAYER, true);
         gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, TERRAIN_LAYER - 1, true);
     }
     private void initializeAvatar() {
-        Vector2 initialPos = new Vector2(INITIAL_AVATAR_X_POS,
-                terrain.groundHeightAt(INITIAL_AVATAR_X_POS) - CREATE_AVATAR_Y_OFFSET * Block.SIZE);
+        int initialX = INITIAL_AVATAR_X_POS;
+        if (tree.treeInX(initialX)) {
+            initialX++;
+        }
+        Vector2 initialPos = new Vector2(initialX,
+                terrain.groundHeightAt(initialX) - CREATE_AVATAR_Y_OFFSET * Block.SIZE);
         avatar = Avatar.create(gameObjects(), AVATAR_LAYER,
                 initialPos, inputListener, imageReader);
 
@@ -131,44 +165,36 @@ public class PepseGameManager extends GameManager {
         // focus camera on the avatar
         setCamera(new Camera(avatar, Vector2.ZERO, windowController.getWindowDimensions(),
                 windowController.getWindowDimensions()));
+
     }
 
-    /**
-     * Override PepseGameManager update function for infinite render
-     * @param deltaTime The time, in seconds, that passed since the last invocation
-     *                  of this method (i.e., since the last frame). This is useful
-     *                  for either accumulating the total time that passed since some
-     *                  event, or for physics integration (i.e., multiply this by
-     *                  the acceleration to get an estimate of the added velocity or
-     *                  by the velocity to get an estimate of the difference in position).
-     */
     @Override
     public void update(float deltaTime) {
         super.update(deltaTime);
-        //check if need to update blocks on screen
-        float avatarX = avatar.getCenter().x();
-        int xPosInBlocks = avatar.getXPosInBlocks();
-        int minBlocksPos = (int) (avatarX - windowController.getWindowDimensions().x()/2);
-        int maxBlocksPos = (int) (avatarX + windowController.getWindowDimensions().x()/2);
-        if (xPosInBlocks < (int) avatarX/Block.SIZE) {
-            terrain.removeXBlocks(minBlocksPos);
-            terrain.createInRange(maxBlocksPos, maxBlocksPos + Block.SIZE);
-            avatar.setXPosInBlocks(xPosInBlocks + 1);
-//            updateTerrain(minBlocksPos, maxBlocksPos, xPosInBlocks);
-        }
-        if (xPosInBlocks > (int) avatarX/Block.SIZE) {
-            terrain.removeXBlocks(maxBlocksPos);
-            terrain.createInRange(minBlocksPos - Block.SIZE, minBlocksPos);
-            avatar.setXPosInBlocks(xPosInBlocks - 1);
-//            updateTerrain(maxBlocksPos, minBlocksPos - Block.SIZE, xPosInBlocks);
-        }
+        int avatarX = (int) avatar.getTopLeftCorner().x();
+        updateWorldGeneration(avatarX);
+
     }
 
-    //helper function to remove ground blocks from terrain
-    private void updateTerrain(int posToRemove, int posToAdd, int xPosInBlocks) {
-        terrain.removeXBlocks(posToRemove);
-        terrain.createInRange(posToAdd, posToAdd + Block.SIZE);
-        avatar.setXPosInBlocks(xPosInBlocks - 1);
+    private void updateWorldGeneration(int avatarX) {
+        if (avatarX - lowestRenderedX < halfWindowWidth) {
+            terrain.createInRange(lowestRenderedX - CHUNK_SIZE, lowestRenderedX);
+            tree.createInRange(lowestRenderedX - CHUNK_SIZE, lowestRenderedX);
+            terrain.removeBlocksInRange(highestRenderedX - CHUNK_SIZE, highestRenderedX);
+            tree.removeTreeInRange(highestRenderedX - CHUNK_SIZE, highestRenderedX);
+
+            highestRenderedX -= CHUNK_SIZE;
+            lowestRenderedX -= CHUNK_SIZE;
+        }
+        if (highestRenderedX - avatarX < halfWindowWidth) {
+            terrain.createInRange(highestRenderedX, highestRenderedX + CHUNK_SIZE);
+            tree.createInRange(highestRenderedX, highestRenderedX + CHUNK_SIZE);
+            terrain.removeBlocksInRange(lowestRenderedX, lowestRenderedX + CHUNK_SIZE);
+            tree.removeTreeInRange(lowestRenderedX, lowestRenderedX + CHUNK_SIZE);
+
+            highestRenderedX += CHUNK_SIZE;
+            lowestRenderedX += CHUNK_SIZE;
+        }
     }
 
     /**

@@ -20,26 +20,24 @@ public class Avatar extends GameObject {
 //    private static final String WOOPDEEDOO2 = "assets/woopdeedoo2.png";
 //    private static final String WOOPDEEDOO3 = "assets/woopdeedoo3.png";
 //    private static final String WOOPDEEDOO4 = "assets/woopdeedoo4.png";
-    private static final String WOOPDEEDOO1 = "assets/woopdeedoo1_no_bg.png";
-    private static final String WOOPDEEDOO2 = "assets/woopdeedoo2_no_bg.png";
-    private static final String WOOPDEEDOO3 = "assets/woopdeedoo3_no_bg.png";
-    private static final String WOOPDEEDOO4 = "assets/woopdeedoo4_no_bg.png";
-    private static final String JUMPING_SOUND = "assets/icy-tower-woopdeedoo_sound.wav";
-    private static final double WOOPDEEDOO_ANIMATION_TIME = 0.1;
-
-    private static Renderable ICY_TOWER_RENDERABLE;
-    private static AnimationRenderable FLYING_JUMPING_ANIMATION;
-    private Sound flyingAndJumpingSound;
-
-    private static final Vector2 AVATAR_SIZE = new Vector2(25, 50);
-    private static final float VELOCITY_X = 100;
+    private static final String FLYING_ANIMATION1_PATH = "assets/woopdeedoo1_no_bg.png";
+    private static final String FLYING_ANIMATION2_PATH = "assets/woopdeedoo2_no_bg.png";
+    private static final String FLYING_ANIMATION3_PATH = "assets/woopdeedoo3_no_bg.png";
+    private static final String FLYING_ANIMATION4_PATH = "assets/woopdeedoo4_no_bg.png";
+    private static final String JUMPING_SOUND_PATH = "assets/icy-tower-woopdeedoo_sound.wav";
+    private static final double FLYING_ANIMATION_TIME = 0.1;
+    private static final Vector2 AVATAR_DIMENSIONS = new Vector2(25, 50);
+    private static final float VELOCITY_X = 150;
     private static final float VELOCITY_Y = -300;
-    private static final float Y_ACC = 500;
+    private static final float Y_ACCELERATION = 500;
     private static final float FLY_ENERGY_LOSS = 0.5f;
     private static final float MAX_ENERGY_LEVEL = 100f;
     private final UserInputListener inputListener;
+    private static Renderable defaultRenderable;
+    private static AnimationRenderable JumpingAnimationRenderable;
+    private Sound flyingAndJumpingSound;
     private float energyLevel;
-    private int xPosInBlocks;
+    private float prevYVel;
 
 
     /**
@@ -56,23 +54,7 @@ public class Avatar extends GameObject {
         super(topLeftCorner, dimensions, renderable);
         this.inputListener = inputListener;
         energyLevel = MAX_ENERGY_LEVEL;
-        xPosInBlocks = (int) this.getCenter().x()/Block.SIZE;
-    }
-
-    /**
-     * Get x position of avatar in blocks
-     * @return xPosInBlocks
-     */
-    public int getXPosInBlocks() {
-        return xPosInBlocks;
-    }
-
-    /**
-     * Set xPosInBlocks to x
-     * @param x
-     */
-    public void setXPosInBlocks(int x) {
-        xPosInBlocks = x;
+        prevYVel = 0;
     }
 
     /**
@@ -86,28 +68,28 @@ public class Avatar extends GameObject {
     public static Avatar create(GameObjectCollection gameObjects, int layer, Vector2 topLeftCorner,
                                 UserInputListener inputListener, ImageReader imageReader) {
         loadRenderables(imageReader);
-        Avatar avatar = new Avatar(topLeftCorner, AVATAR_SIZE,
-                ICY_TOWER_RENDERABLE, inputListener);
+        Avatar avatar = new Avatar(topLeftCorner, AVATAR_DIMENSIONS,
+                defaultRenderable, inputListener);
         gameObjects.addGameObject(avatar, layer);
 
         avatar.physics().preventIntersectionsFromDirection(Vector2.ZERO);
-        avatar.transform().setAccelerationY(Y_ACC);
+        avatar.transform().setAccelerationY(Y_ACCELERATION);
 
         return avatar;
     }
 
     public void activateJumpingSound(SoundReader soundReader) {
-        flyingAndJumpingSound = soundReader.readSound(JUMPING_SOUND);
+        flyingAndJumpingSound = soundReader.readSound(JUMPING_SOUND_PATH);
     }
 
     public static void loadRenderables(ImageReader imageReader) {
-        ICY_TOWER_RENDERABLE = imageReader.readImage(ICY_TOWER_IMG_PATH, true);
-        FLYING_JUMPING_ANIMATION = new AnimationRenderable(new Renderable[]{
-                imageReader.readImage(WOOPDEEDOO1, true),
-                imageReader.readImage(WOOPDEEDOO2, true),
-                imageReader.readImage(WOOPDEEDOO3, true),
-                imageReader.readImage(WOOPDEEDOO4, true)},
-                WOOPDEEDOO_ANIMATION_TIME);
+        defaultRenderable = imageReader.readImage(ICY_TOWER_IMG_PATH, true);
+        JumpingAnimationRenderable = new AnimationRenderable(new Renderable[]{
+                imageReader.readImage(FLYING_ANIMATION1_PATH, true),
+                imageReader.readImage(FLYING_ANIMATION2_PATH, true),
+                imageReader.readImage(FLYING_ANIMATION3_PATH, true),
+                imageReader.readImage(FLYING_ANIMATION4_PATH, true)},
+                FLYING_ANIMATION_TIME);
     }
 
     private void updateVelocityX() {
@@ -119,15 +101,21 @@ public class Avatar extends GameObject {
         transform().setVelocityX(xVel);
     }
 
-    private void updateSoundAndRenderable() {
-        if (transform().getVelocity().y() != 0) { return; }
+    @Override
+    public void onCollisionEnter(GameObject other, Collision collision) {
+        super.onCollisionEnter(other, collision);
+            transform().setVelocityY(0);
+    }
 
-        renderer().setRenderable(ICY_TOWER_RENDERABLE);
-        if (inputListener.isKeyPressed(KeyEvent.VK_SPACE)) {
+    private void updateSoundAndRenderable() {
+        if (prevYVel != 0 && transform().getVelocity().y() == 0) {
+            renderer().setRenderable(defaultRenderable);
+        }
+        if (prevYVel == 0 && transform().getVelocity().y() != 0) {
             if (flyingAndJumpingSound != null) {
                 flyingAndJumpingSound.play();
             }
-            renderer().setRenderable(FLYING_JUMPING_ANIMATION);
+            renderer().setRenderable(JumpingAnimationRenderable);
         }
     }
 
@@ -149,9 +137,14 @@ public class Avatar extends GameObject {
     @Override
     public void update(float deltaTime) {
         super.update(deltaTime);
-        updateSoundAndRenderable();
+        if (transform().getVelocity().y() == 0 && inputListener.isKeyPressed(KeyEvent.VK_SPACE)
+                && flyingAndJumpingSound != null) {
+                flyingAndJumpingSound.play();
+        }
         updateVelocityX();
         updateVelocityYAndEnergy();
+        updateSoundAndRenderable();
+        prevYVel = transform().getVelocity().y();
     }
 
 }

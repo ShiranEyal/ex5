@@ -25,9 +25,10 @@ public class Terrain {
     //ground color
     private static final Color BASE_GROUND_COLOR = new Color(212, 123, 74);
     //terrain depth
-    private static final int TERRAIN_DEPTH = 20;
+    private static final int TERRAIN_DEPTH = 24;
     //noise amplifier
     private static final int NOISE_AMP = 5;
+    private static final String GROUND_TAG = "Ground";
 
     private GameObjectCollection gameObjects;
     private int groundLayer;
@@ -51,6 +52,7 @@ public class Terrain {
         this.windowDimensions = windowDimensions;
         this.groundHeightAtX0 = GROUND_HEIGHT_AMOUNT * this.windowDimensions.y();
         this.noiseGenerator = new NoiseGenerator(seed);
+
     }
 
     /**
@@ -70,13 +72,13 @@ public class Terrain {
      */
     public void createInRange(int minX, int maxX) {
         for (int x = getClosestX(minX); x < maxX; x += Block.SIZE) {
-            double y = Math.floor(groundHeightAt(x) / Block.SIZE) * Block.SIZE;
+            int y = ((int)groundHeightAt(x) / Block.SIZE) * Block.SIZE;
             List<Block> blocksList = new ArrayList<>();
             for (int i = 0; i < TERRAIN_DEPTH; i++) {
                 Block b = new Block(Vector2.ZERO,
                         new RectangleRenderable(ColorSupplier.approximateColor(BASE_GROUND_COLOR)));
-                b.setCenter(new Vector2(x + Block.SIZE/2, (float) y - Block.SIZE/2));
-                b.setTag("Ground");
+                b.setTopLeftCorner(new Vector2(x, y - Block.SIZE));
+                b.setTag(GROUND_TAG);
                 gameObjects.addGameObject(b, groundLayer - i);
                 y += Block.SIZE;
                 blocksList.add(b);
@@ -92,18 +94,18 @@ public class Terrain {
     public void removeXBlocks(int x) {
         int realX = getClosestX(x);
         int i = 0;
-//        if(xToBlocks.get(realX) != null) {
-//            for (Block b : xToBlocks.get(realX)) {
-//                gameObjects.removeGameObject(b, groundLayer - i);
-//                i++;
-//            }
-//            xToBlocks.remove(realX);
-//        }
         for (Block b : xToBlocks.get(realX)) {
             gameObjects.removeGameObject(b, groundLayer - i);
             i++;
         }
     }
+
+    public void removeBlocksInRange(int minX, int maxX) {
+        for (int x = minX; x < maxX; x += Block.SIZE) {
+            removeXBlocks(x);
+        }
+    }
+
     /*
     helper function to get closest x to starting x that is
     divisable by blockSize

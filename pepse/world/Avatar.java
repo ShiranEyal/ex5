@@ -32,13 +32,14 @@ public class Avatar extends GameObject {
     private Sound flyingAndJumpingSound;
 
     private static final Vector2 AVATAR_SIZE = new Vector2(25, 50);
-    private static final float VELOCITY_X = 300;
+    private static final float VELOCITY_X = 100;
     private static final float VELOCITY_Y = -300;
     private static final float Y_ACC = 500;
     private static final float FLY_ENERGY_LOSS = 0.5f;
     private static final float MAX_ENERGY_LEVEL = 100f;
     private final UserInputListener inputListener;
     private float energyLevel;
+    private int xPosInBlocks;
 
 
     /**
@@ -55,6 +56,23 @@ public class Avatar extends GameObject {
         super(topLeftCorner, dimensions, renderable);
         this.inputListener = inputListener;
         energyLevel = MAX_ENERGY_LEVEL;
+        xPosInBlocks = (int) this.getCenter().x()/Block.SIZE;
+    }
+
+    /**
+     * Get x position of avatar in blocks
+     * @return xPosInBlocks
+     */
+    public int getXPosInBlocks() {
+        return xPosInBlocks;
+    }
+
+    /**
+     * Set xPosInBlocks to x
+     * @param x
+     */
+    public void setXPosInBlocks(int x) {
+        xPosInBlocks = x;
     }
 
     /**

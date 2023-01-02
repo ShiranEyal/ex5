@@ -1,6 +1,7 @@
 package pepse.util.pepse.world.trees;
 
 import danogl.collisions.GameObjectCollection;
+import danogl.collisions.Layer;
 import danogl.components.ScheduledTask;
 import danogl.components.Transition;
 import danogl.gui.rendering.RectangleRenderable;
@@ -10,6 +11,9 @@ import pepse.util.pepse.world.Block;
 import pepse.util.pepse.world.Terrain;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
 
@@ -31,6 +35,9 @@ public class Tree {
     private final Terrain terrain;
     private final GameObjectCollection gameObjects;
     private final int layer;
+
+    private static HashMap<Integer, List<Block>> xToTree = new HashMap<>();
+
 
 //    private final Function<Float, Float> plantTree;
 
@@ -66,6 +73,7 @@ public class Tree {
                     new RectangleRenderable(TREE_TRUNK_COLOR));
             trunkBlock.setTag(TREE_TRUNK_TAG);
             gameObjects.addGameObject(trunkBlock, layer);
+            addToMap(x, trunkBlock);
         }
     }
 
@@ -85,6 +93,7 @@ public class Tree {
                 resetLeafAndScheduleKill(leaf);
 
                 gameObjects.addGameObject(leaf, layer + 1);
+                addToMap(centerX, leaf);
             }
         }
     }
@@ -114,6 +123,28 @@ public class Tree {
         new Transition<Float>(leaf, width -> leaf.setDimensions(new Vector2(width, leaf.getDimensions().y())),
                 (float)Block.SIZE, (float) Block.SIZE - 3, Transition.LINEAR_INTERPOLATOR_FLOAT,
                 7, Transition.TransitionType.TRANSITION_BACK_AND_FORTH, null);
+    }
+
+    public void removeTreeAtX(int x) {
+        if (!xToTree.containsKey(x)) { return; }
+        for (Block treeBlock : xToTree.get(x)) {
+            if (treeBlock instanceof Leaf) {
+                gameObjects.removeGameObject(treeBlock, layer + 1);
+            } else {
+                gameObjects.removeGameObject(treeBlock, layer);
+            }
+        }
+    }
+
+    public boolean treeInX(int x) {
+        return xToTree.containsKey(x);
+    }
+
+    private static void addToMap(int x, Block block) {
+        if (!xToTree.containsKey(x)) {
+            xToTree.put(x, new ArrayList<Block>());
+        }
+        xToTree.get(x).add(block);
     }
 }
 

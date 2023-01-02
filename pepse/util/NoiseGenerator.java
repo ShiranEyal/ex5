@@ -99,7 +99,7 @@ public class NoiseGenerator {
     }
 
     public double noise(double x) {
-        x = x / 20;
+        x = x / 50;
         double value = 0.0;
         double size = default_size;
         double initialSize = size;
@@ -109,7 +109,7 @@ public class NoiseGenerator {
             size /= 2.0;
         }
 
-        return value / initialSize;
+        return 2 * value / initialSize;
     }
 
     public double smoothNoise(double x, double y, double z) {

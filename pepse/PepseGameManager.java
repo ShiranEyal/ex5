@@ -111,8 +111,12 @@ public class PepseGameManager extends GameManager {
         gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, TERRAIN_LAYER - 1, true);
     }
     private void initializeAvatar() {
-        Vector2 initialPos = new Vector2(INITIAL_AVATAR_X_POS,
-                terrain.groundHeightAt(INITIAL_AVATAR_X_POS) - CREATE_AVATAR_Y_OFFSET * Block.SIZE);
+        int initialX = INITIAL_AVATAR_X_POS;
+        if (tree.treeInX(initialX)) {
+            initialX++;
+        }
+        Vector2 initialPos = new Vector2(initialX,
+                terrain.groundHeightAt(initialX) - CREATE_AVATAR_Y_OFFSET * Block.SIZE);
         avatar = Avatar.create(gameObjects(), AVATAR_LAYER,
                 initialPos, inputListener, imageReader);
 

@@ -119,6 +119,12 @@ public class Avatar extends GameObject {
         transform().setVelocityX(xVel);
     }
 
+    @Override
+    public void onCollisionEnter(GameObject other, Collision collision) {
+        super.onCollisionEnter(other, collision);
+            transform().setVelocityY(0);
+    }
+
     private void updateSoundAndRenderable() {
         if (transform().getVelocity().y() != 0) { return; }
 

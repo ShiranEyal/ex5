@@ -7,6 +7,7 @@ import danogl.collisions.Layer;
 import danogl.gui.SoundReader;
 import danogl.gui.rendering.Renderable;
 import danogl.util.Vector2;
+import pepse.util.pepse.world.trees.Leaf;
 
 /**
  * Shot class that represents a shot from the avatar
@@ -44,4 +45,11 @@ public class Shot extends GameObject {
         gameObjects.removeGameObject(other, layer);
         gameObjects.removeGameObject(this, layer);
     }
+//    @Override
+//    public boolean shouldCollideWith(GameObject other) {
+//        if (other instanceof Chicken) {
+//            return true;
+//        }
+//        return false;
+//    }
 }

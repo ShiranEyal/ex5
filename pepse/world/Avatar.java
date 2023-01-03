@@ -51,11 +51,10 @@ public class Avatar extends GameObject {
     private Sound shootingSound;
     private float energyLevel;
     private float prevYVel;
-    private ImageReader imageReader;
     private  SoundReader soundReader;
     private GameObjectCollection gameObjects;
     private boolean canShoot = true;
-    private Renderable shotImage;
+    private ImageRenderable shotImage;
 
 
     /**
@@ -72,10 +71,10 @@ public class Avatar extends GameObject {
                   GameObjectCollection gameObjects) {
         super(topLeftCorner, dimensions, renderable);
         this.gameObjects = gameObjects;
-//        this.imageReader = imageReader;
         this.inputListener = inputListener;
         energyLevel = MAX_ENERGY_LEVEL;
         prevYVel = 0;
+        this.shotImage = imageReader.readImage(BULLET_PATH, true);
         shotImage = imageReader.readImage(BULLET_PATH, true);
     }
 
@@ -160,7 +159,7 @@ public class Avatar extends GameObject {
     }
 
     private void updateShooting() {
-        if (inputListener.isKeyPressed(KeyEvent.VK_C) && canShoot) {
+        if (inputListener.isKeyPressed(KeyEvent.VK_UP) && canShoot) {
             Shot shot = new Shot(getTopLeftCorner(), BULLET_SIZE, shotImage, gameObjects, SHOT_LAYER);
             shot.setVelocity(Vector2.UP.mult(BULLET_VELOCITY));
             gameObjects.addGameObject(shot, SHOT_LAYER);
@@ -168,16 +167,15 @@ public class Avatar extends GameObject {
             new ScheduledTask(shot, BULLET_LIFESPAN, false, () ->
                     gameObjects.removeGameObject(shot, SHOT_LAYER));
             canShoot = false;
-            new ScheduledTask(shot, SHOT_TIME_DELAY, false, () -> canShoot = true);
+            new ScheduledTask(this, SHOT_TIME_DELAY, false, () -> canShoot = true);
         }
     }
-
     @Override
     public void update(float deltaTime) {
         super.update(deltaTime);
         if (transform().getVelocity().y() == 0 && inputListener.isKeyPressed(KeyEvent.VK_SPACE)
                 && flyingAndJumpingSound != null) {
-                flyingAndJumpingSound.play();
+            flyingAndJumpingSound.play();
         }
         updateShooting();
         updateVelocityX();
@@ -185,5 +183,4 @@ public class Avatar extends GameObject {
         updateSoundAndRenderable();
         prevYVel = transform().getVelocity().y();
     }
-
 }

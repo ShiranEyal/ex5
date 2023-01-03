@@ -3,6 +3,7 @@ package pepse.util.pepse;
 import danogl.GameManager;
 import danogl.GameObject;
 import danogl.collisions.Layer;
+import danogl.components.CoordinateSpace;
 import danogl.gui.*;
 import danogl.gui.rendering.Camera;
 import danogl.util.Vector2;
@@ -43,6 +44,10 @@ public class PepseGameManager extends GameManager {
     ////// Avatar initialization constants //////
     private static final int INITIAL_AVATAR_X_POS = 25 * Block.SIZE;
     private static final int CREATE_AVATAR_Y_OFFSET = 5;
+
+    ////// UI objects //////
+    private static final Vector2 TIMER_DIMENSIONS = Vector2.of(70, 30);
+    private static final int GAME_LENGTH_IN_SECONDS = 180;
 
 
     ////// initializeGame parameters //////
@@ -87,10 +92,17 @@ public class PepseGameManager extends GameManager {
         windowController.setTargetFramerate(FRAME_TARGET);
         Vector2 windowDimensions = windowController.getWindowDimensions();
 
+        // initialize timer
+        // TODO add runnable
+        Timer timer = new Timer(Vector2.ZERO, TIMER_DIMENSIONS,
+                GAME_LENGTH_IN_SECONDS, () -> windowController.openYesNoDialog(""));
+        timer.setCoordinateSpace(CoordinateSpace.CAMERA_COORDINATES);
+        gameObjects().addGameObject(timer, Layer.UI);
+
         // save the parameters of this method into field
         saveInitializeGameParameters(imageReader, soundReader, inputListener, windowController);
 
-        // initialize general fields that deals with the world generation
+        // initialize general fields that deal with the world generation
         initializeWorldGenerationFields(windowDimensions);
 
         //create sky

@@ -3,6 +3,7 @@ package pepse.util.pepse.world.chickens;
 import danogl.collisions.GameObjectCollection;
 import danogl.collisions.Layer;
 import danogl.components.ScheduledTask;
+import danogl.components.Transition;
 import danogl.gui.ImageReader;
 import danogl.gui.Sound;
 import danogl.gui.SoundReader;
@@ -19,7 +20,8 @@ import java.util.HashSet;
  */
 public class Chickens {
     private static final float CHICKENS_HEIGHT = -1f/10f;
-    private static final int CHICKENS_DISTANCE = 30 * Block.SIZE;
+    private static final float CHICKEN_HEIGHT_OFFSET = 10f;
+    private static final int CHICKENS_DISTANCE = 20 * Block.SIZE;
     private static final Vector2 CHICKEN_SIZE = new Vector2(3 * Block.SIZE, 3 * Block.SIZE);
     private static final String CHICKEN_NOISE_1 = "assets/chicken_noise_1.wav";
     private static final String CHICKEN_NOISE_2 = "assets/chicken_noise_2.wav";
@@ -58,10 +60,10 @@ public class Chickens {
                 soundReader.readSound(CHICKEN_NOISE_1),
                 soundReader.readSound(CHICKEN_NOISE_2)
         };
-        int realX = getClosestX(minX);
-        for (int i = realX;  i < maxX; i += CHICKENS_DISTANCE) {
-            if (!shouldNotRender.contains(realX) && !xToChickens.containsKey(realX)) {
-                Vector2 chickenPos = new Vector2(i, chickenY);
+        int realMinX = getClosestX(minX);
+        for (int currX = realMinX;  currX < maxX; currX += CHICKENS_DISTANCE) {
+            if (!shouldNotRender.contains(currX) && !xToChickens.containsKey(currX)) {
+                Vector2 chickenPos = new Vector2(currX, chickenY);
                 Sound randomSound = chicken_sounds[(int) Math.random()*2];
                 Chicken chicken = new Chicken(chickenPos, CHICKEN_SIZE, chickenImage,
                         shouldNotRender, randomSound, chickensCounter);
@@ -69,10 +71,14 @@ public class Chickens {
                 chicken.setVelocity(Vector2.UP.mult(CHICKEN_SPEED));
                 gameObjects.addGameObject(chicken, CHICKEN_LAYER);
                 gameObjects.layers().shouldLayersCollide(CHICKEN_LAYER, CHICKEN_LAYER, true);
-                new ScheduledTask(chicken, SWITCH_CHICKEN_VELOCITY_TIME,
-                        false, () ->
-                        chicken.setVelocity(chicken.getVelocity().mult(FLIP_VELOCITY_CONST)));
-                xToChickens.put(i, chicken);
+//                new ScheduledTask(chicken, SWITCH_CHICKEN_VELOCITY_TIME,
+//                        true, () ->
+//                        chicken.setVelocity(chicken.getVelocity().mult(FLIP_VELOCITY_CONST)));
+                new Transition<Float>(chicken, (y) -> chicken.setCenter(new Vector2(chicken.getCenter().x(), y)),
+                        CHICKEN_HEIGHT_OFFSET, -CHICKEN_HEIGHT_OFFSET,
+                        Transition.LINEAR_INTERPOLATOR_FLOAT, SWITCH_CHICKEN_VELOCITY_TIME,
+                        Transition.TransitionType.TRANSITION_BACK_AND_FORTH, null);
+                xToChickens.put(currX, chicken);
             }
         }
     }
@@ -94,7 +100,10 @@ public class Chickens {
     }
     // helper function to get closest x to distances between chickens
     private int getClosestX(int x) {
-        return (x/CHICKENS_DISTANCE) * CHICKENS_DISTANCE;
+        if (x < 0) {
+            return CHICKENS_DISTANCE * (x/CHICKENS_DISTANCE - 1);
+        }
+        return ((x/CHICKENS_DISTANCE) * CHICKENS_DISTANCE);
     }
 
 }

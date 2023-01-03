@@ -25,12 +25,11 @@ public class Chickens {
     private static final Vector2 CHICKEN_SIZE = new Vector2(3 * Block.SIZE, 3 * Block.SIZE);
     private static final String CHICKEN_NOISE_1 = "assets/chicken_noise_1.wav";
     private static final String CHICKEN_NOISE_2 = "assets/chicken_noise_2.wav";
-    private static final String CHICKEN_IMAGE = "assets/chicken.png";
+    private static final String CHICKEN_IMAGE = "assets/red_chicken_noBG.png";
     private static final int CHICKEN_LAYER = Layer.DEFAULT + 30;
     private static final String CHICKEN_TAG = "chicken";
     private static final int CHICKEN_SPEED = 5;
     private static final int SWITCH_CHICKEN_VELOCITY_TIME = 1;
-    private static final int FLIP_VELOCITY_CONST = -1;
 
     private GameObjectCollection gameObjects;
     private HashSet<Integer> shouldNotRender = new HashSet<>();
@@ -60,10 +59,11 @@ public class Chickens {
                 soundReader.readSound(CHICKEN_NOISE_1),
                 soundReader.readSound(CHICKEN_NOISE_2)
         };
-        int realMinX = getClosestX(minX);
-        for (int currX = realMinX;  currX < maxX; currX += CHICKENS_DISTANCE) {
-            if (!shouldNotRender.contains(currX) && !xToChickens.containsKey(currX)) {
-                Vector2 chickenPos = new Vector2(currX, chickenY);
+        int realMinX = getUpperClosestX(minX);
+        int realMaxX = getLowerClosestX(maxX);
+        for (int curX = realMinX;  curX <= realMaxX; curX += CHICKENS_DISTANCE) {
+            if (!shouldNotRender.contains(curX) && !xToChickens.containsKey(curX)) {
+                Vector2 chickenPos = new Vector2(curX, chickenY);
                 Sound randomSound = chicken_sounds[(int) Math.random()*2];
                 Chicken chicken = new Chicken(chickenPos, CHICKEN_SIZE, chickenImage,
                         shouldNotRender, randomSound, chickensCounter);
@@ -71,14 +71,12 @@ public class Chickens {
                 chicken.setVelocity(Vector2.UP.mult(CHICKEN_SPEED));
                 gameObjects.addGameObject(chicken, CHICKEN_LAYER);
                 gameObjects.layers().shouldLayersCollide(CHICKEN_LAYER, CHICKEN_LAYER, true);
-//                new ScheduledTask(chicken, SWITCH_CHICKEN_VELOCITY_TIME,
-//                        true, () ->
-//                        chicken.setVelocity(chicken.getVelocity().mult(FLIP_VELOCITY_CONST)));
-                new Transition<Float>(chicken, (y) -> chicken.setCenter(new Vector2(chicken.getCenter().x(), y)),
+                new Transition<Float>(chicken,
+                        (y) -> chicken.setCenter(new Vector2(chicken.getCenter().x(), y)),
                         CHICKEN_HEIGHT_OFFSET, -CHICKEN_HEIGHT_OFFSET,
                         Transition.LINEAR_INTERPOLATOR_FLOAT, SWITCH_CHICKEN_VELOCITY_TIME,
                         Transition.TransitionType.TRANSITION_BACK_AND_FORTH, null);
-                xToChickens.put(currX, chicken);
+                xToChickens.put(curX, chicken);
             }
         }
     }
@@ -89,8 +87,9 @@ public class Chickens {
      * @param maxX
      */
     public void removeInRange(int minX, int maxX) {
-        int realX = getClosestX(minX);
-        while (realX < maxX) {
+        int realX = getUpperClosestX(minX);
+        int realMax = getLowerClosestX(maxX);
+        while (realX < realMax) {
             if (xToChickens.get(realX) != null) {
                 gameObjects.removeGameObject(xToChickens.get(realX), CHICKEN_LAYER);
                 xToChickens.remove(realX);
@@ -99,11 +98,17 @@ public class Chickens {
         }
     }
     // helper function to get closest x to distances between chickens
-    private int getClosestX(int x) {
+    private int getLowerClosestX(int x) {
         if (x < 0) {
-            return CHICKENS_DISTANCE * (x/CHICKENS_DISTANCE - 1);
+            return (x/CHICKENS_DISTANCE - 1) * CHICKENS_DISTANCE;
         }
-        return ((x/CHICKENS_DISTANCE) * CHICKENS_DISTANCE);
+        return (x/CHICKENS_DISTANCE) * CHICKENS_DISTANCE;
+    }
+    private int getUpperClosestX(int x) {
+        if (x < 0) {
+            return (x/CHICKENS_DISTANCE) * CHICKENS_DISTANCE;
+        }
+        return (x/CHICKENS_DISTANCE + 1) * CHICKENS_DISTANCE;
     }
 
 }

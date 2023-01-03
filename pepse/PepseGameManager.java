@@ -5,12 +5,14 @@ import danogl.GameObject;
 import danogl.collisions.Layer;
 import danogl.gui.*;
 import danogl.gui.rendering.Camera;
+import danogl.util.Counter;
 import danogl.util.Vector2;
 import pepse.util.pepse.world.*;
 import pepse.util.pepse.world.daynight.Night;
 import pepse.util.pepse.world.daynight.Sun;
 import pepse.util.pepse.world.daynight.SunHalo;
 import pepse.util.pepse.world.trees.Tree;
+import pepse.util.pepse.world.chickens.*;
 
 import java.awt.*;
 import java.util.Random;
@@ -42,6 +44,9 @@ public class PepseGameManager extends GameManager {
     private static final int CREATE_AVATAR_Y_OFFSET = 5;
     private static final String MAIN_THEME = "assets/main_theme.wav";
 
+    ////// End Game Params //////
+    private static final int WIN_AMOUNT = 3;
+    private static final String WIN_PROMPT = "You saved the galaxy! Wanna do it again?";
 
     ////// initializeGame parameters //////
     private WindowController windowController;
@@ -63,6 +68,8 @@ public class PepseGameManager extends GameManager {
     private Avatar avatar;
     private Tree tree;
     private Sound theme;
+    private Chickens chickens;
+    private Counter chickensCounter;
 
 
     /**
@@ -104,11 +111,16 @@ public class PepseGameManager extends GameManager {
         initializeAvatar();
         //init music
         initializeMusic(soundReader);
+        //create chickens
+        this.chickensCounter = new Counter();
+        chickens = new Chickens(this.gameObjects(), windowDimensions,
+                imageReader, soundReader, chickensCounter);
+        chickens.createInRange(lowestRenderedX, highestRenderedX);
     }
 
     private void initializeMusic(SoundReader soundReader) {
         theme = soundReader.readSound(MAIN_THEME);
-        theme.play();
+        theme.playLooped();
     }
 
     private void saveInitializeGameParameters(ImageReader imageReader, SoundReader soundReader,
@@ -177,14 +189,17 @@ public class PepseGameManager extends GameManager {
         super.update(deltaTime);
         int avatarX = (int) avatar.getTopLeftCorner().x();
         updateWorldGeneration(avatarX);
+        updateWinCon();
     }
 
     private void updateWorldGeneration(int avatarX) {
         if (avatarX - lowestRenderedX < halfWindowWidth) {
             terrain.createInRange(lowestRenderedX - CHUNK_SIZE, lowestRenderedX);
             tree.createInRange(lowestRenderedX - CHUNK_SIZE, lowestRenderedX);
+            chickens.createInRange(lowestRenderedX - CHUNK_SIZE, lowestRenderedX);
             terrain.removeBlocksInRange(highestRenderedX - CHUNK_SIZE, highestRenderedX);
             tree.removeTreeInRange(highestRenderedX - CHUNK_SIZE, highestRenderedX);
+            chickens.removeInRange(highestRenderedX - CHUNK_SIZE, highestRenderedX);
 
             highestRenderedX -= CHUNK_SIZE;
             lowestRenderedX -= CHUNK_SIZE;
@@ -192,11 +207,37 @@ public class PepseGameManager extends GameManager {
         if (highestRenderedX - avatarX < halfWindowWidth) {
             terrain.createInRange(highestRenderedX, highestRenderedX + CHUNK_SIZE);
             tree.createInRange(highestRenderedX, highestRenderedX + CHUNK_SIZE);
+            chickens.createInRange(highestRenderedX, highestRenderedX + CHUNK_SIZE);
             terrain.removeBlocksInRange(lowestRenderedX, lowestRenderedX + CHUNK_SIZE);
             tree.removeTreeInRange(lowestRenderedX, lowestRenderedX + CHUNK_SIZE);
+            chickens.removeInRange(lowestRenderedX, lowestRenderedX + CHUNK_SIZE);
 
             highestRenderedX += CHUNK_SIZE;
             lowestRenderedX += CHUNK_SIZE;
+        }
+    }
+
+    //helper function to update win condition
+    private void updateWinCon() {
+        if (chickensCounter.value() >= WIN_AMOUNT) {
+            if (windowController.openYesNoDialog(WIN_PROMPT)) {
+                theme.stopAllOccurences();
+                windowController.resetGame();
+            } else {
+                windowController.closeWindow();
+            }
+        }
+    }
+
+    private void openWinLosePrompt(boolean didWin) {
+        String prompt = WIN_PROMPT;
+        if (!didWin) {
+            prompt = "";
+        }
+        if (windowController.openYesNoDialog(prompt)) {
+            windowController.resetGame();
+        } else {
+            windowController.closeWindow();
         }
     }
 

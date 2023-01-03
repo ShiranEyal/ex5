@@ -53,6 +53,7 @@ public class Avatar extends GameObject {
     private  SoundReader soundReader;
     private GameObjectCollection gameObjects;
     private boolean canShoot = true;
+    private ImageRenderable shotImage;
 
 
     /**
@@ -73,6 +74,7 @@ public class Avatar extends GameObject {
         this.inputListener = inputListener;
         energyLevel = MAX_ENERGY_LEVEL;
         prevYVel = 0;
+        this.shotImage = imageReader.readImage(BULLET_PATH, true);
     }
 
     /**
@@ -152,16 +154,17 @@ public class Avatar extends GameObject {
         if (getVelocity().y() == 0 && energyLevel < MAX_ENERGY_LEVEL) {
             energyLevel += FLY_ENERGY_LOSS;
         }
-        if (inputListener.isKeyPressed(KeyEvent.VK_C) && canShoot) {
-            ImageRenderable img = imageReader.readImage(BULLET_PATH, true);
-            Shot shot = new Shot(getTopLeftCorner(), BULLET_SIZE, img, gameObjects, SHOT_LAYER);
+    }
+    private void updateBullets() {
+        if (inputListener.isKeyPressed(KeyEvent.VK_UP) && canShoot) {
+            Shot shot = new Shot(getTopLeftCorner(), BULLET_SIZE, shotImage, gameObjects, SHOT_LAYER);
             shot.setVelocity(Vector2.UP.mult(BULLET_VELOCITY));
             gameObjects.addGameObject(shot, SHOT_LAYER);
             shootingSound.play();
             new ScheduledTask(shot, BULLET_LIFESPAN, false, () ->
                     gameObjects.removeGameObject(shot, SHOT_LAYER));
             canShoot = false;
-            new ScheduledTask(shot, SHOT_TIME_DELAY, false, () -> canShoot = true);
+            new ScheduledTask(this, SHOT_TIME_DELAY, false, () -> canShoot = true);
         }
     }
     @Override
@@ -174,6 +177,7 @@ public class Avatar extends GameObject {
         updateVelocityX();
         updateVelocityYAndEnergy();
         updateSoundAndRenderable();
+        updateBullets();
         prevYVel = transform().getVelocity().y();
     }
 

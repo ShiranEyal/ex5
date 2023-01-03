@@ -20,6 +20,9 @@ public class PepseGameManager extends GameManager {
     ////// Frame Target //////
     private static final int FRAME_TARGET = 80;
 
+    ////// Music path //////
+    private static final String MAIN_THEME = "assets/main_theme.wav";
+
     ////// Layers Constants //////
     private static final int SKY_LAYER = Layer.BACKGROUND;
     private static final int TERRAIN_LAYER = Layer.DEFAULT;
@@ -40,7 +43,6 @@ public class PepseGameManager extends GameManager {
     ////// Avatar initialization constants //////
     private static final int INITIAL_AVATAR_X_POS = 25 * Block.SIZE;
     private static final int CREATE_AVATAR_Y_OFFSET = 5;
-    private static final String MAIN_THEME = "assets/main_theme.wav";
 
 
     ////// initializeGame parameters //////
@@ -108,7 +110,7 @@ public class PepseGameManager extends GameManager {
 
     private void initializeMusic(SoundReader soundReader) {
         theme = soundReader.readSound(MAIN_THEME);
-        theme.play();
+        theme.playLooped();
     }
 
     private void saveInitializeGameParameters(ImageReader imageReader, SoundReader soundReader,
@@ -139,6 +141,15 @@ public class PepseGameManager extends GameManager {
     private void initializeTree() {
         tree = new Tree(gameObjects(), TREE_TRUNK_LAYER, terrain, seed);
         tree.createInRange(lowestRenderedX, highestRenderedX);
+
+        // makes sure that the tree layers isn't empty (otherwise we can't enable collisions
+        // with other layers)
+        GameObject nonCollidingObject = new GameObject(Vector2.ZERO, Vector2.ZERO, null) {
+                    @Override
+                    public boolean shouldCollideWith(GameObject other) { return false; }
+                    };
+        gameObjects().addGameObject(nonCollidingObject, LEAVES_LAYER);
+        gameObjects().addGameObject(nonCollidingObject, TREE_TRUNK_LAYER);
 
         // enable collisions between leaves and first two ground layers
         gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, TERRAIN_LAYER, true);

@@ -159,7 +159,7 @@ public class Avatar extends GameObject {
     }
 
     private void updateShooting() {
-        if (inputListener.isKeyPressed(KeyEvent.VK_C) && canShoot) {
+        if (inputListener.isKeyPressed(KeyEvent.VK_UP) && canShoot) {
             Shot shot = new Shot(getTopLeftCorner(), BULLET_SIZE, shotImage, gameObjects, SHOT_LAYER);
             shot.setVelocity(Vector2.UP.mult(BULLET_VELOCITY));
             gameObjects.addGameObject(shot, SHOT_LAYER);

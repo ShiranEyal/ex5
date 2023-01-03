@@ -3,11 +3,14 @@ package pepse.util.pepse.world;
 import danogl.GameObject;
 import danogl.collisions.Collision;
 import danogl.collisions.GameObjectCollection;
+import danogl.collisions.Layer;
+import danogl.components.ScheduledTask;
 import danogl.gui.ImageReader;
 import danogl.gui.Sound;
 import danogl.gui.SoundReader;
 import danogl.gui.UserInputListener;
 import danogl.gui.rendering.AnimationRenderable;
+import danogl.gui.rendering.ImageRenderable;
 import danogl.gui.rendering.Renderable;
 import danogl.util.Vector2;
 
@@ -24,7 +27,9 @@ public class Avatar extends GameObject {
     private static final String FLYING_ANIMATION2_PATH = "assets/woopdeedoo2_no_bg.png";
     private static final String FLYING_ANIMATION3_PATH = "assets/woopdeedoo3_no_bg.png";
     private static final String FLYING_ANIMATION4_PATH = "assets/woopdeedoo4_no_bg.png";
-    private static final String JUMPING_SOUND_PATH = "assets/icy-tower-woopdeedoo_sound_better.wav";
+    private static final String JUMPING_SOUND_PATH = "assets/icy-tower-woopdeedoo_sound.wav";
+    private static final String BULLET_PATH = "assets/bullet.png";
+    private static final String BULLET_SOUND_PATH = "assets/shoot.wav";
     private static final double FLYING_ANIMATION_TIME = 0.1;
     private static final Vector2 AVATAR_DIMENSIONS = new Vector2(25, 50);
     private static final float VELOCITY_X = 150;
@@ -32,12 +37,22 @@ public class Avatar extends GameObject {
     private static final float Y_ACCELERATION = 500;
     private static final float FLY_ENERGY_LOSS = 0.5f;
     private static final float MAX_ENERGY_LEVEL = 100f;
+    private static final int SHOT_LAYER = Layer.DEFAULT + 30;
+    private static final float BULLET_VELOCITY = 300;
+    private static final Vector2 BULLET_SIZE = new Vector2(5, 15);
+    private static final int BULLET_LIFESPAN = 3;
+    private static final int SHOT_TIME_DELAY = 1;
     private final UserInputListener inputListener;
     private static Renderable defaultRenderable;
     private static AnimationRenderable JumpingAnimationRenderable;
     private Sound flyingAndJumpingSound;
+    private Sound shootingSound;
     private float energyLevel;
     private float prevYVel;
+    private ImageReader imageReader;
+    private  SoundReader soundReader;
+    private GameObjectCollection gameObjects;
+    private boolean canShoot = true;
 
 
     /**
@@ -50,8 +65,11 @@ public class Avatar extends GameObject {
      *                      the GameObject will not be rendered.
      */
     public Avatar(Vector2 topLeftCorner, Vector2 dimensions, Renderable renderable,
-                  UserInputListener inputListener) {
+                  UserInputListener inputListener, ImageReader imageReader,
+                  GameObjectCollection gameObjects) {
         super(topLeftCorner, dimensions, renderable);
+        this.gameObjects = gameObjects;
+        this.imageReader = imageReader;
         this.inputListener = inputListener;
         energyLevel = MAX_ENERGY_LEVEL;
         prevYVel = 0;
@@ -69,7 +87,7 @@ public class Avatar extends GameObject {
                                 UserInputListener inputListener, ImageReader imageReader) {
         loadRenderables(imageReader);
         Avatar avatar = new Avatar(topLeftCorner, AVATAR_DIMENSIONS,
-                defaultRenderable, inputListener);
+                defaultRenderable, inputListener, imageReader, gameObjects);
         gameObjects.addGameObject(avatar, layer);
 
         avatar.physics().preventIntersectionsFromDirection(Vector2.ZERO);
@@ -78,8 +96,10 @@ public class Avatar extends GameObject {
         return avatar;
     }
 
-    public void activateJumpingSound(SoundReader soundReader) {
+    public void setSoundReaderAndSounds(SoundReader soundReader) {
+        this.soundReader = soundReader;
         flyingAndJumpingSound = soundReader.readSound(JUMPING_SOUND_PATH);
+        shootingSound = soundReader.readSound(BULLET_SOUND_PATH);
     }
 
     public static void loadRenderables(ImageReader imageReader) {
@@ -120,18 +140,28 @@ public class Avatar extends GameObject {
     }
 
 
-
     private void updateVelocityYAndEnergy() {
-        if(inputListener.isKeyPressed(KeyEvent.VK_SPACE) && getVelocity().y() == 0) {
+        if (inputListener.isKeyPressed(KeyEvent.VK_SPACE) && getVelocity().y() == 0) {
             transform().setVelocityY(VELOCITY_Y);
         }
-        if(inputListener.isKeyPressed(KeyEvent.VK_SHIFT) &&
+        if (inputListener.isKeyPressed(KeyEvent.VK_SHIFT) &&
                 inputListener.isKeyPressed(KeyEvent.VK_SPACE) && energyLevel > 0) {
             transform().setVelocityY(VELOCITY_Y);
             energyLevel -= FLY_ENERGY_LOSS;
         }
         if (getVelocity().y() == 0 && energyLevel < MAX_ENERGY_LEVEL) {
             energyLevel += FLY_ENERGY_LOSS;
+        }
+        if (inputListener.isKeyPressed(KeyEvent.VK_C) && canShoot) {
+            ImageRenderable img = imageReader.readImage(BULLET_PATH, true);
+            Shot shot = new Shot(getTopLeftCorner(), BULLET_SIZE, img, gameObjects, SHOT_LAYER);
+            shot.setVelocity(Vector2.UP.mult(BULLET_VELOCITY));
+            gameObjects.addGameObject(shot, SHOT_LAYER);
+            shootingSound.play();
+            new ScheduledTask(shot, BULLET_LIFESPAN, false, () ->
+                    gameObjects.removeGameObject(shot, SHOT_LAYER));
+            canShoot = false;
+            new ScheduledTask(shot, SHOT_TIME_DELAY, false, () -> canShoot = true);
         }
     }
     @Override

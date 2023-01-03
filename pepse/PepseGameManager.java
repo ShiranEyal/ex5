@@ -3,19 +3,10 @@ package pepse.util.pepse;
 import danogl.GameManager;
 import danogl.GameObject;
 import danogl.collisions.Layer;
-import danogl.gui.ImageReader;
-import danogl.gui.SoundReader;
-import danogl.gui.UserInputListener;
-import danogl.gui.WindowController;
-import danogl.gui.rendering.AnimationRenderable;
+import danogl.gui.*;
 import danogl.gui.rendering.Camera;
-import danogl.gui.rendering.ImageRenderable;
-import danogl.gui.rendering.Renderable;
 import danogl.util.Vector2;
-import pepse.util.pepse.world.Avatar;
-import pepse.util.pepse.world.Block;
-import pepse.util.pepse.world.Sky;
-import pepse.util.pepse.world.Terrain;
+import pepse.util.pepse.world.*;
 import pepse.util.pepse.world.daynight.Night;
 import pepse.util.pepse.world.daynight.Sun;
 import pepse.util.pepse.world.daynight.SunHalo;
@@ -43,11 +34,13 @@ public class PepseGameManager extends GameManager {
     ////// Day Night Cycle initialization constants  //////
     private static final float DAY_CYCLE_LENGTH = 60f;
     private static final Color SUN_HALO_COLOR = new Color(255, 255, 0, 20);
-
+    private static final float CREATE_AVATAR_DELAY = 5f;
+    private static final int WORLD_CREATION_BUFFER_SIZE = 4 * Block.SIZE;
 
     ////// Avatar initialization constants //////
     private static final int INITIAL_AVATAR_X_POS = 25 * Block.SIZE;
     private static final int CREATE_AVATAR_Y_OFFSET = 5;
+    private static final String MAIN_THEME = "assets/main_theme.wav";
 
 
     ////// initializeGame parameters //////
@@ -69,6 +62,7 @@ public class PepseGameManager extends GameManager {
     private Terrain terrain;
     private Avatar avatar;
     private Tree tree;
+    private Sound theme;
 
 
     /**
@@ -108,6 +102,13 @@ public class PepseGameManager extends GameManager {
         initializeTree();
         // create avatar
         initializeAvatar();
+        //init music
+        initializeMusic(soundReader);
+    }
+
+    private void initializeMusic(SoundReader soundReader) {
+        theme = soundReader.readSound(MAIN_THEME);
+        theme.play();
     }
 
     private void saveInitializeGameParameters(ImageReader imageReader, SoundReader soundReader,
@@ -154,8 +155,8 @@ public class PepseGameManager extends GameManager {
                 initialPos, inputListener, imageReader);
 
         // according to the given signature of Avatar.create function we can't pass the
-        // SoundReader and this is the reason to the wierd "activateJumpingSound" function.
-        avatar.activateJumpingSound(soundReader);
+        // SoundReader and this is the reason to the wierd "setSoundReaderAndSounds" function.
+        avatar.setSoundReaderAndSounds(soundReader);
 
         // enable collisions between trees and avatar
         gameObjects().layers().shouldLayersCollide(TREE_TRUNK_LAYER, AVATAR_LAYER, true);
@@ -168,6 +169,7 @@ public class PepseGameManager extends GameManager {
         // focus camera on the avatar
         setCamera(new Camera(avatar, Vector2.ZERO, windowController.getWindowDimensions(),
                 windowController.getWindowDimensions()));
+
     }
 
     @Override
@@ -175,7 +177,6 @@ public class PepseGameManager extends GameManager {
         super.update(deltaTime);
         int avatarX = (int) avatar.getTopLeftCorner().x();
         updateWorldGeneration(avatarX);
-
     }
 
     private void updateWorldGeneration(int avatarX) {

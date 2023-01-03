@@ -18,7 +18,7 @@ import java.util.function.Function;
 
 public class Tree {
     private static final int MIN_TREE_HEIGHT = Block.SIZE * 5;
-    private static final int MAX_TREE_HEIGHT = Block.SIZE * 10;
+    private static final int MAX_TREE_HEIGHT = Block.SIZE * 12;
 
     private static final Color TREE_TRUNK_COLOR = new Color(100, 50, 20);
     private static final Color TREE_LEAF_COLOR = new Color(50, 200, 30);
@@ -58,14 +58,14 @@ public class Tree {
         this.gameObjects = gameObjects;
         this.layer = layer;
         random = new Random(seed);
-        int treesPlacementSeed = random.nextInt();
-        treesPlacementFunction = reproducibleFunction(treesPlacementSeed);
-        int treesHeightSeed = random.nextInt();
-        treesHeightFunction = reproducibleFunction(treesHeightSeed);
+        treesPlacementFunction = reproducibleFunction();
+        treesHeightFunction = reproducibleFunction();
     }
 
-    private static Function<Integer, Float> reproducibleFunction(int seed) {
-        return x -> 0.25f * (2 + (float) (Math.sin(x + seed) + Math.sin(Math.E * x * seed)));
+    private Function<Integer, Float> reproducibleFunction() {
+        final int randInt = random.nextInt(1, Integer.MAX_VALUE);
+        return x -> 0.25f * (2 + (float) (Math.sin(x + randInt) +
+                Math.sin(Math.E * x * randInt)));
     }
 
     public void createInRange(int minX, int maxX) {

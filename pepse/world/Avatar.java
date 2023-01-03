@@ -4,6 +4,7 @@ import danogl.GameObject;
 import danogl.collisions.Collision;
 import danogl.collisions.GameObjectCollection;
 import danogl.collisions.Layer;
+import danogl.components.CoordinateSpace;
 import danogl.components.ScheduledTask;
 import danogl.gui.ImageReader;
 import danogl.gui.Sound;
@@ -12,6 +13,7 @@ import danogl.gui.UserInputListener;
 import danogl.gui.rendering.AnimationRenderable;
 import danogl.gui.rendering.ImageRenderable;
 import danogl.gui.rendering.Renderable;
+import danogl.gui.rendering.TextRenderable;
 import danogl.util.Vector2;
 
 import java.awt.event.KeyEvent;
@@ -53,6 +55,7 @@ public class Avatar extends GameObject {
     private  SoundReader soundReader;
     private GameObjectCollection gameObjects;
     private boolean canShoot = true;
+    private Renderable shotImage;
 
 
     /**
@@ -69,10 +72,11 @@ public class Avatar extends GameObject {
                   GameObjectCollection gameObjects) {
         super(topLeftCorner, dimensions, renderable);
         this.gameObjects = gameObjects;
-        this.imageReader = imageReader;
+//        this.imageReader = imageReader;
         this.inputListener = inputListener;
         energyLevel = MAX_ENERGY_LEVEL;
         prevYVel = 0;
+        shotImage = imageReader.readImage(BULLET_PATH, true);
     }
 
     /**
@@ -92,6 +96,7 @@ public class Avatar extends GameObject {
 
         avatar.physics().preventIntersectionsFromDirection(Vector2.ZERO);
         avatar.transform().setAccelerationY(Y_ACCELERATION);
+
 
         return avatar;
     }
@@ -152,9 +157,11 @@ public class Avatar extends GameObject {
         if (getVelocity().y() == 0 && energyLevel < MAX_ENERGY_LEVEL) {
             energyLevel += FLY_ENERGY_LOSS;
         }
+    }
+
+    private void updateShooting() {
         if (inputListener.isKeyPressed(KeyEvent.VK_C) && canShoot) {
-            ImageRenderable img = imageReader.readImage(BULLET_PATH, true);
-            Shot shot = new Shot(getTopLeftCorner(), BULLET_SIZE, img, gameObjects, SHOT_LAYER);
+            Shot shot = new Shot(getTopLeftCorner(), BULLET_SIZE, shotImage, gameObjects, SHOT_LAYER);
             shot.setVelocity(Vector2.UP.mult(BULLET_VELOCITY));
             gameObjects.addGameObject(shot, SHOT_LAYER);
             shootingSound.play();
@@ -164,6 +171,7 @@ public class Avatar extends GameObject {
             new ScheduledTask(shot, SHOT_TIME_DELAY, false, () -> canShoot = true);
         }
     }
+
     @Override
     public void update(float deltaTime) {
         super.update(deltaTime);
@@ -171,6 +179,7 @@ public class Avatar extends GameObject {
                 && flyingAndJumpingSound != null) {
                 flyingAndJumpingSound.play();
         }
+        updateShooting();
         updateVelocityX();
         updateVelocityYAndEnergy();
         updateSoundAndRenderable();

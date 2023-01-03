@@ -38,7 +38,7 @@ public class Chicken extends GameObject {
         chickenSound.play();
         int x = (int) getTopLeftCorner().x();
         shouldNotRender.add(x);
-        chickensCounter.increment();
+        chickensCounter.decrement();
     }
     @Override
     public boolean shouldCollideWith(GameObject other) {

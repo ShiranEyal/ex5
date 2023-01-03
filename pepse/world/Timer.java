@@ -7,23 +7,20 @@ import danogl.util.Vector2;
 
 public class Timer extends GameObject {
     private static final int MINUTE_LENGTH = 60;
-    private final Runnable endingRunnable;
-    private Counter timeCounter;
+    private static final String TIMER_TEXT = "TIME LEFT: ";
     private final TextRenderable timeDisplay;
+    Counter timeCounter;
+    private Runnable runWhenTimeEnds;
 
     public Timer(Vector2 topLeftCorner, Vector2 dimensions, int timeInSeconds,
                  Runnable runWhenTimeEnds) {
         super(topLeftCorner, dimensions, null);
+        this.runWhenTimeEnds = runWhenTimeEnds;
         timeDisplay = new TextRenderable(secondsToText(timeInSeconds));
         renderer().setRenderable(timeDisplay);
-
         timeCounter = new Counter(timeInSeconds);
-        endingRunnable = runWhenTimeEnds;
-
         new ScheduledTask(this, 1, true,
-                this::updateTimeDisplay);
-
-
+                this::updateTime);
     }
 
     private static String secondsToText(int timeInSeconds) {
@@ -38,14 +35,14 @@ public class Timer extends GameObject {
         return String.format("%s : %s", minutesString, secondsString);
     }
 
-    private void updateTimeDisplay() {
+    private void updateTime() {
         if (timeCounter.value() > 0) {
             timeCounter.decrement();
-            timeDisplay.setString(secondsToText(timeCounter.value()));
+            timeDisplay.setString(TIMER_TEXT + secondsToText(timeCounter.value()));
             return;
         }
-        if (endingRunnable != null) {
-            endingRunnable.run();
+        if (runWhenTimeEnds != null) {
+            runWhenTimeEnds.run();
         }
     }
 }

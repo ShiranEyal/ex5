@@ -163,7 +163,7 @@ public class Tree {
         xToTree.remove(x);
     }
 
-    public void removeTreeInRange(int minX, int maxX) {
+    public void removeInRange(int minX, int maxX) {
         for (int x = (minX / Block.SIZE) * Block.SIZE;
              x < (maxX / Block.SIZE) * Block.SIZE ; x += Block.SIZE) {
             removeTreeAtX(x);

@@ -21,19 +21,4 @@ public class Block extends GameObject {
         physics().preventIntersectionsFromDirection(Vector2.ZERO);
         physics().setMass(GameObjectPhysics.IMMOVABLE_MASS);
     }
-
-    /**
-     * Override
-     * @param deltaTime The time elapsed, in seconds, since the last frame. Can
-     *                  be used to determine a new position/velocity by multiplying
-     *                  this delta with the velocity/acceleration respectively
-     *                  and adding to the position/velocity:
-     *                  velocity += deltaTime*acceleration
-     *                  pos += deltaTime*velocity
-     */
-    @Override
-    public void update(float deltaTime) {
-        super.update(deltaTime);
-
-    }
 }

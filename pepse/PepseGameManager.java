@@ -47,13 +47,15 @@ public class PepseGameManager extends GameManager {
     private static final int INITIAL_AVATAR_X_POS = 25 * Block.SIZE;
     private static final int CREATE_AVATAR_Y_OFFSET = 5;
 
-    ////// UI objects //////
+    ////// UI Params //////
     private static final Vector2 TIMER_DIMENSIONS = Vector2.of(70, 30);
-    private static final int GAME_LENGTH_IN_SECONDS = 180;
+    private static final Vector2 CHICKEN_COUNTER_DIMENSIONS = Vector2.of(70, 30);
 
     ////// End Game Params //////
-    private static final int WIN_AMOUNT = 3;
+    private static final int GAME_LENGTH_IN_SECONDS = 180;
+    private static final int WIN_AMOUNT = 20;
     private static final String WIN_PROMPT = "You saved the galaxy! Wanna do it again?";
+    private static final String LOSE_PROMPT = "You didn't save the galaxy this time! Wanna try again?";
 
     ////// initializeGame parameters //////
     private WindowController windowController;
@@ -77,6 +79,7 @@ public class PepseGameManager extends GameManager {
     private Sound theme;
     private Chickens chickens;
     private Counter chickensCounter;
+    private ChickenCountdown chickenCountdownDisplay;
 
 
     /**
@@ -99,13 +102,6 @@ public class PepseGameManager extends GameManager {
         windowController.setTargetFramerate(FRAME_TARGET);
         Vector2 windowDimensions = windowController.getWindowDimensions();
 
-        // initialize timer
-        // TODO add runnable
-        Timer timer = new Timer(Vector2.ZERO, TIMER_DIMENSIONS,
-                GAME_LENGTH_IN_SECONDS, () -> windowController.openYesNoDialog(""));
-        timer.setCoordinateSpace(CoordinateSpace.CAMERA_COORDINATES);
-        gameObjects().addGameObject(timer, Layer.UI);
-
         // save the parameters of this method into field
         saveInitializeGameParameters(imageReader, soundReader, inputListener, windowController);
 
@@ -126,10 +122,27 @@ public class PepseGameManager extends GameManager {
         //init music
         initializeMusic(soundReader);
         //create chickens
-        this.chickensCounter = new Counter();
+        this.chickensCounter = new Counter(WIN_AMOUNT);
         chickens = new Chickens(this.gameObjects(), windowDimensions,
                 imageReader, soundReader, chickensCounter);
         chickens.createInRange(lowestRenderedX, highestRenderedX);
+
+        // initialize timer
+        initializeUIObjects();
+    }
+
+    private void initializeUIObjects() {
+        Timer timer = new Timer(Vector2.ZERO, TIMER_DIMENSIONS,
+                GAME_LENGTH_IN_SECONDS, () -> openWinLosePrompt(false));
+        timer.setCoordinateSpace(CoordinateSpace.CAMERA_COORDINATES);
+        Vector2 chickenCounterPos = Vector2.of(0, windowController.getWindowDimensions().y()
+                - CHICKEN_COUNTER_DIMENSIONS.y());
+        chickenCountdownDisplay = new ChickenCountdown(chickenCounterPos ,CHICKEN_COUNTER_DIMENSIONS,
+                chickensCounter);
+        chickenCountdownDisplay.setCoordinateSpace(CoordinateSpace.CAMERA_COORDINATES);
+
+        gameObjects().addGameObject(timer, Layer.UI);
+        gameObjects().addGameObject(chickenCountdownDisplay, Layer.UI);
     }
 
     private void initializeMusic(SoundReader soundReader) {
@@ -221,18 +234,19 @@ public class PepseGameManager extends GameManager {
             tree.createInRange(lowestRenderedX - CHUNK_SIZE, lowestRenderedX);
             chickens.createInRange(lowestRenderedX - CHUNK_SIZE, lowestRenderedX);
             terrain.removeBlocksInRange(highestRenderedX - CHUNK_SIZE, highestRenderedX);
-            tree.removeTreeInRange(highestRenderedX - CHUNK_SIZE, highestRenderedX);
+            tree.removeInRange(highestRenderedX - CHUNK_SIZE, highestRenderedX);
             chickens.removeInRange(highestRenderedX - CHUNK_SIZE, highestRenderedX);
 
             highestRenderedX -= CHUNK_SIZE;
             lowestRenderedX -= CHUNK_SIZE;
         }
+
         if (highestRenderedX - avatarX < halfWindowWidth) {
             terrain.createInRange(highestRenderedX, highestRenderedX + CHUNK_SIZE);
             tree.createInRange(highestRenderedX, highestRenderedX + CHUNK_SIZE);
             chickens.createInRange(highestRenderedX, highestRenderedX + CHUNK_SIZE);
             terrain.removeBlocksInRange(lowestRenderedX, lowestRenderedX + CHUNK_SIZE);
-            tree.removeTreeInRange(lowestRenderedX, lowestRenderedX + CHUNK_SIZE);
+            tree.removeInRange(lowestRenderedX, lowestRenderedX + CHUNK_SIZE);
             chickens.removeInRange(lowestRenderedX, lowestRenderedX + CHUNK_SIZE);
 
             highestRenderedX += CHUNK_SIZE;
@@ -240,22 +254,17 @@ public class PepseGameManager extends GameManager {
         }
     }
 
-    //helper function to update win condition
+//    helper function to update win condition
     private void updateWinCon() {
-        if (chickensCounter.value() >= WIN_AMOUNT) {
-            if (windowController.openYesNoDialog(WIN_PROMPT)) {
-                theme.stopAllOccurences();
-                windowController.resetGame();
-            } else {
-                windowController.closeWindow();
-            }
+        if (chickensCounter.value() <= 0) {
+            openWinLosePrompt(true);
         }
     }
 
     private void openWinLosePrompt(boolean didWin) {
         String prompt = WIN_PROMPT;
         if (!didWin) {
-            prompt = "";
+            prompt = LOSE_PROMPT;
         }
         if (windowController.openYesNoDialog(prompt)) {
             windowController.resetGame();

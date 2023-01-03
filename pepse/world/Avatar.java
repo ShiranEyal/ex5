@@ -4,6 +4,7 @@ import danogl.GameObject;
 import danogl.collisions.Collision;
 import danogl.collisions.GameObjectCollection;
 import danogl.collisions.Layer;
+import danogl.components.CoordinateSpace;
 import danogl.components.ScheduledTask;
 import danogl.gui.ImageReader;
 import danogl.gui.Sound;
@@ -12,6 +13,7 @@ import danogl.gui.UserInputListener;
 import danogl.gui.rendering.AnimationRenderable;
 import danogl.gui.rendering.ImageRenderable;
 import danogl.gui.rendering.Renderable;
+import danogl.gui.rendering.TextRenderable;
 import danogl.util.Vector2;
 
 import java.awt.event.KeyEvent;
@@ -49,7 +51,6 @@ public class Avatar extends GameObject {
     private Sound shootingSound;
     private float energyLevel;
     private float prevYVel;
-    private ImageReader imageReader;
     private  SoundReader soundReader;
     private GameObjectCollection gameObjects;
     private boolean canShoot = true;
@@ -70,11 +71,11 @@ public class Avatar extends GameObject {
                   GameObjectCollection gameObjects) {
         super(topLeftCorner, dimensions, renderable);
         this.gameObjects = gameObjects;
-        this.imageReader = imageReader;
         this.inputListener = inputListener;
         energyLevel = MAX_ENERGY_LEVEL;
         prevYVel = 0;
         this.shotImage = imageReader.readImage(BULLET_PATH, true);
+        shotImage = imageReader.readImage(BULLET_PATH, true);
     }
 
     /**
@@ -94,6 +95,7 @@ public class Avatar extends GameObject {
 
         avatar.physics().preventIntersectionsFromDirection(Vector2.ZERO);
         avatar.transform().setAccelerationY(Y_ACCELERATION);
+
 
         return avatar;
     }
@@ -155,8 +157,9 @@ public class Avatar extends GameObject {
             energyLevel += FLY_ENERGY_LOSS;
         }
     }
-    private void updateBullets() {
-        if (inputListener.isKeyPressed(KeyEvent.VK_UP) && canShoot) {
+
+    private void updateShooting() {
+        if (inputListener.isKeyPressed(KeyEvent.VK_C) && canShoot) {
             Shot shot = new Shot(getTopLeftCorner(), BULLET_SIZE, shotImage, gameObjects, SHOT_LAYER);
             shot.setVelocity(Vector2.UP.mult(BULLET_VELOCITY));
             gameObjects.addGameObject(shot, SHOT_LAYER);
@@ -172,13 +175,12 @@ public class Avatar extends GameObject {
         super.update(deltaTime);
         if (transform().getVelocity().y() == 0 && inputListener.isKeyPressed(KeyEvent.VK_SPACE)
                 && flyingAndJumpingSound != null) {
-                flyingAndJumpingSound.play();
+            flyingAndJumpingSound.play();
         }
+        updateShooting();
         updateVelocityX();
         updateVelocityYAndEnergy();
         updateSoundAndRenderable();
-        updateBullets();
         prevYVel = transform().getVelocity().y();
     }
-
 }

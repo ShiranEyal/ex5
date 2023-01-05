@@ -2,6 +2,10 @@ package pepse.util.pepse.util;
 
 import java.util.Random;
 
+/**
+ * NoiseGenerator class. This class was taken from outside resources
+ * and implements adding perlin noise to our terrain.
+ */
 public class NoiseGenerator {
     private double seed;
     private long default_size;

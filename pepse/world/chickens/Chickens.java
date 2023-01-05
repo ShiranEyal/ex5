@@ -14,6 +14,7 @@ import pepse.util.pepse.world.Block;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  * Chickens class in charge of handling all instances of chickens
@@ -38,6 +39,15 @@ public class Chickens {
     private ImageReader imageReader;
     private SoundReader soundReader;
     private Counter chickensCounter;
+
+    /**
+     * Chickens object constructor
+     * @param gameObjects
+     * @param windowDimensions
+     * @param imageReader
+     * @param soundReader
+     * @param counter
+     */
     public Chickens(GameObjectCollection gameObjects, Vector2 windowDimensions,
                     ImageReader imageReader, SoundReader soundReader, Counter counter) {
         this.gameObjects = gameObjects;
@@ -97,13 +107,14 @@ public class Chickens {
             realX += CHICKENS_DISTANCE;
         }
     }
-    // helper function to get closest x to distances between chickens
+    // helper function to get floor x to distances between chickens
     private int getLowerClosestX(int x) {
         if (x < 0) {
             return (x/CHICKENS_DISTANCE - 1) * CHICKENS_DISTANCE;
         }
         return (x/CHICKENS_DISTANCE) * CHICKENS_DISTANCE;
     }
+    // helper function to get ceiling x to distances between chickens
     private int getUpperClosestX(int x) {
         if (x < 0) {
             return (x/CHICKENS_DISTANCE) * CHICKENS_DISTANCE;

@@ -18,6 +18,12 @@ import pepse.util.pepse.world.chickens.*;
 import java.awt.*;
 import java.util.Random;
 
+/**
+ * PepseGameManager, extends GameManager, in charge of creating
+ * an instance of the game, which includes initializing all objects
+ * and saving relevant data on the game, as well as updating the world
+ * generation and checking for win-lose conditions.
+ */
 public class PepseGameManager extends GameManager {
 
     ////// Frame Target //////
@@ -131,6 +137,7 @@ public class PepseGameManager extends GameManager {
         initializeUIObjects();
     }
 
+    //helper function to initialize the user interface related objects
     private void initializeUIObjects() {
         Timer timer = new Timer(Vector2.ZERO, TIMER_DIMENSIONS,
                 GAME_LENGTH_IN_SECONDS, () -> openWinLosePrompt(false));
@@ -145,11 +152,13 @@ public class PepseGameManager extends GameManager {
         gameObjects().addGameObject(chickenCountdownDisplay, Layer.UI);
     }
 
+    //helper function to initialize music
     private void initializeMusic(SoundReader soundReader) {
         theme = soundReader.readSound(MAIN_THEME);
         theme.playLooped();
     }
 
+    //helper function to save relevant initial parameters
     private void saveInitializeGameParameters(ImageReader imageReader, SoundReader soundReader,
                                               UserInputListener inputListener,
                                               WindowController windowController) {
@@ -159,6 +168,7 @@ public class PepseGameManager extends GameManager {
         this.soundReader = soundReader;
     }
 
+    //helper function to initialize parameters relevant for world generation
     private void initializeWorldGenerationFields(Vector2 windowDimensions) {
         seed = new Random().nextInt();
         lowestRenderedX = -CHUNK_SIZE;
@@ -166,6 +176,7 @@ public class PepseGameManager extends GameManager {
         halfWindowWidth = (int) windowDimensions.x() / 2;
     }
 
+    //helper function to initialize day-night cycle, sun and sunhalo
     private void initializeDayNightCycle() {
         Night.create(gameObjects(), NIGHT_LAYER,
                 windowController.getWindowDimensions(), DAY_CYCLE_LENGTH);
@@ -175,6 +186,7 @@ public class PepseGameManager extends GameManager {
         SunHalo.create(gameObjects(), SUN_HALO_LAYER, sun, SUN_HALO_COLOR);
     }
 
+    //helper function to initialize the avatar character and all related features
     private void initializeTree() {
         tree = new Tree(gameObjects(), TREE_TRUNK_LAYER, terrain, seed);
         tree.createInRange(lowestRenderedX, highestRenderedX);
@@ -192,6 +204,8 @@ public class PepseGameManager extends GameManager {
         gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, TERRAIN_LAYER, true);
         gameObjects().layers().shouldLayersCollide(LEAVES_LAYER, TERRAIN_LAYER - 1, true);
     }
+
+    //helper function to initialize the avatar character and all related features
     private void initializeAvatar() {
         int initialX = INITIAL_AVATAR_X_POS;
         if (tree.treeInX(initialX)) {
@@ -220,6 +234,15 @@ public class PepseGameManager extends GameManager {
 
     }
 
+    /**
+     * Override update function for PepseGameManager
+     * @param deltaTime The time, in seconds, that passed since the last invocation
+     *                  of this method (i.e., since the last frame). This is useful
+     *                  for either accumulating the total time that passed since some
+     *                  event, or for physics integration (i.e., multiply this by
+     *                  the acceleration to get an estimate of the added velocity or
+     *                  by the velocity to get an estimate of the difference in position).
+     */
     @Override
     public void update(float deltaTime) {
         super.update(deltaTime);
@@ -228,6 +251,7 @@ public class PepseGameManager extends GameManager {
         updateWinCon();
     }
 
+    //helper function to update the world generation
     private void updateWorldGeneration(int avatarX) {
         if (avatarX - lowestRenderedX < halfWindowWidth) {
             terrain.createInRange(lowestRenderedX - CHUNK_SIZE, lowestRenderedX);
@@ -254,13 +278,14 @@ public class PepseGameManager extends GameManager {
         }
     }
 
-//    helper function to update win condition
+    //helper function to update win condition
     private void updateWinCon() {
         if (chickensCounter.value() <= 0) {
             openWinLosePrompt(true);
         }
     }
 
+    //helper function to open win or lose prompt
     private void openWinLosePrompt(boolean didWin) {
         String prompt = WIN_PROMPT;
         if (!didWin) {

@@ -18,6 +18,11 @@ import danogl.util.Vector2;
 
 import java.awt.event.KeyEvent;
 
+/**
+ * Avatar class, extends GameObject,
+ * responsible for creating, managing and updating the Avatar
+ * and all of its features.
+ */
 public class Avatar extends GameObject {
 
     private static final String ICY_TOWER_IMG_PATH = "assets/IcyTowerGuy.png";
@@ -79,9 +84,11 @@ public class Avatar extends GameObject {
     }
 
     /**
-     * @param gameObjects
-     * @param layer
-     * @param topLeftCorner
+     * Create function that creates a new GameObject representing the Avatar,
+     * adds it to gameObjects and returns the newly created object.
+     * @param gameObjects all GameObjects to add avatar into
+     * @param layer layer to create avatar in
+     * @param topLeftCorner position to create avatar in
      * @param inputListener
      * @param imageReader
      * @return
@@ -92,20 +99,26 @@ public class Avatar extends GameObject {
         Avatar avatar = new Avatar(topLeftCorner, AVATAR_DIMENSIONS,
                 defaultRenderable, inputListener, imageReader, gameObjects);
         gameObjects.addGameObject(avatar, layer);
-
         avatar.physics().preventIntersectionsFromDirection(Vector2.ZERO);
         avatar.transform().setAccelerationY(Y_ACCELERATION);
-
-
         return avatar;
     }
 
+    /**
+     * helper function to define soundReader without changing the function declaration
+     * of create as instructed in the exercise
+     * @param soundReader
+     */
     public void setSoundReaderAndSounds(SoundReader soundReader) {
         this.soundReader = soundReader;
         flyingAndJumpingSound = soundReader.readSound(JUMPING_SOUND_PATH);
         shootingSound = soundReader.readSound(BULLET_SOUND_PATH);
     }
 
+    /**
+     * helper function to load all renderables that the avatar can receive
+     * @param imageReader
+     */
     public static void loadRenderables(ImageReader imageReader) {
         defaultRenderable = imageReader.readImage(ICY_TOWER_IMG_PATH, true);
         JumpingAnimationRenderable = new AnimationRenderable(new Renderable[]{
@@ -116,6 +129,7 @@ public class Avatar extends GameObject {
                 FLYING_ANIMATION_TIME);
     }
 
+    //helper function to update avatar x velocity
     private void updateVelocityX() {
         float xVel = 0;
         if (inputListener.isKeyPressed(KeyEvent.VK_LEFT))
@@ -125,12 +139,20 @@ public class Avatar extends GameObject {
         transform().setVelocityX(xVel);
     }
 
+    /**
+     * Override onCollisionEnter for avatar
+     * @param other The GameObject with which a collision occurred.
+     * @param collision Information regarding this collision.
+     *                  A reasonable elastic behavior can be achieved with:
+     *                  setVelocity(getVelocity().flipped(collision.getNormal()));
+     */
     @Override
     public void onCollisionEnter(GameObject other, Collision collision) {
         super.onCollisionEnter(other, collision);
             transform().setVelocityY(0);
     }
 
+    // helper function to update avatar sounds and renderables
     private void updateSoundAndRenderable() {
         if (prevYVel != 0 && transform().getVelocity().y() == 0) {
             renderer().setRenderable(defaultRenderable);
@@ -143,7 +165,7 @@ public class Avatar extends GameObject {
         }
     }
 
-
+    //helper function to update avatar energy and y velocity
     private void updateVelocityYAndEnergy() {
         if (inputListener.isKeyPressed(KeyEvent.VK_SPACE) && getVelocity().y() == 0) {
             transform().setVelocityY(VELOCITY_Y);
@@ -158,6 +180,7 @@ public class Avatar extends GameObject {
         }
     }
 
+    //helper function to update avatar shooting
     private void updateShooting() {
         if (inputListener.isKeyPressed(KeyEvent.VK_UP) && canShoot) {
             Shot shot = new Shot(getTopLeftCorner(), BULLET_SIZE, shotImage, gameObjects, SHOT_LAYER);
@@ -170,6 +193,16 @@ public class Avatar extends GameObject {
             new ScheduledTask(this, SHOT_TIME_DELAY, false, () -> canShoot = true);
         }
     }
+
+    /**
+     * Override update function for avatar
+     * @param deltaTime The time elapsed, in seconds, since the last frame. Can
+     *                  be used to determine a new position/velocity by multiplying
+     *                  this delta with the velocity/acceleration respectively
+     *                  and adding to the position/velocity:
+     *                  velocity += deltaTime*acceleration
+     *                  pos += deltaTime*velocity
+     */
     @Override
     public void update(float deltaTime) {
         super.update(deltaTime);

@@ -11,6 +11,10 @@ import pepse.util.pepse.world.Shot;
 import java.util.HashMap;
 import java.util.HashSet;
 
+/**
+ * Chicken class, extends GameObject,
+ * represents a single chicken instance in the game.
+ */
 public class Chicken extends GameObject {
     private HashSet<Integer> shouldNotRender;
     private Sound chickenSound;
@@ -32,6 +36,13 @@ public class Chicken extends GameObject {
         this.chickensCounter = counter;
     }
 
+    /**
+     * Override onCollisionEnter function for Chicken
+     * @param other The GameObject with which a collision occurred.
+     * @param collision Information regarding this collision.
+     *                  A reasonable elastic behavior can be achieved with:
+     *                  setVelocity(getVelocity().flipped(collision.getNormal()));
+     */
     @Override
     public void onCollisionEnter(GameObject other, Collision collision) {
         super.onCollisionEnter(other, collision);
@@ -40,6 +51,12 @@ public class Chicken extends GameObject {
         shouldNotRender.add(x);
         chickensCounter.decrement();
     }
+
+    /**
+     * Override shouldCollideWith method for Chicken
+     * @param other The other GameObject.
+     * @return
+     */
     @Override
     public boolean shouldCollideWith(GameObject other) {
         if (other instanceof Shot) {

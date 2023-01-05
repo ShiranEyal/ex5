@@ -14,12 +14,14 @@ import pepse.util.pepse.world.Block;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  * Chickens class in charge of handling all instances of chickens
  */
 public class Chickens {
     private static final float CHICKENS_HEIGHT = -1f/10f;
+    private static final float CHICKEN_HEIGHT_OFFSET = 10f;
     private static final int CHICKENS_DISTANCE = 20 * Block.SIZE;
     private static final Vector2 CHICKEN_SIZE = new Vector2(3 * Block.SIZE, 3 * Block.SIZE);
     private static final String CHICKEN_NOISE_1 = "assets/chicken_noise_1.wav";
@@ -29,7 +31,6 @@ public class Chickens {
     private static final String CHICKEN_TAG = "chicken";
     private static final int CHICKEN_SPEED = 5;
     private static final int SWITCH_CHICKEN_VELOCITY_TIME = 1;
-    private static final Float CHICKEN_HEIGHT_OFFSET = 10f;
 
     private GameObjectCollection gameObjects;
     private HashSet<Integer> shouldNotRender = new HashSet<>();
@@ -38,6 +39,15 @@ public class Chickens {
     private ImageReader imageReader;
     private SoundReader soundReader;
     private Counter chickensCounter;
+
+    /**
+     * Chickens object constructor
+     * @param gameObjects
+     * @param windowDimensions
+     * @param imageReader
+     * @param soundReader
+     * @param counter
+     */
     public Chickens(GameObjectCollection gameObjects, Vector2 windowDimensions,
                     ImageReader imageReader, SoundReader soundReader, Counter counter) {
         this.gameObjects = gameObjects;
@@ -59,7 +69,6 @@ public class Chickens {
                 soundReader.readSound(CHICKEN_NOISE_1),
                 soundReader.readSound(CHICKEN_NOISE_2)
         };
-
         int realMinX = getUpperClosestX(minX);
         int realMaxX = getLowerClosestX(maxX);
         for (int curX = realMinX;  curX <= realMaxX; curX += CHICKENS_DISTANCE) {
@@ -72,13 +81,12 @@ public class Chickens {
                 chicken.setVelocity(Vector2.UP.mult(CHICKEN_SPEED));
                 gameObjects.addGameObject(chicken, CHICKEN_LAYER);
                 gameObjects.layers().shouldLayersCollide(CHICKEN_LAYER, CHICKEN_LAYER, true);
-
                 new Transition<Float>(chicken,
                         (y) -> chicken.setCenter(new Vector2(chicken.getCenter().x(), y)),
                         CHICKEN_HEIGHT_OFFSET, -CHICKEN_HEIGHT_OFFSET,
                         Transition.LINEAR_INTERPOLATOR_FLOAT, SWITCH_CHICKEN_VELOCITY_TIME,
                         Transition.TransitionType.TRANSITION_BACK_AND_FORTH, null);
-
+                xToChickens.put(curX, chicken);
             }
         }
     }
@@ -99,13 +107,14 @@ public class Chickens {
             realX += CHICKENS_DISTANCE;
         }
     }
-    // helper function to get closest x to distances between chickens
+    // helper function to get floor x to distances between chickens
     private int getLowerClosestX(int x) {
         if (x < 0) {
             return (x/CHICKENS_DISTANCE - 1) * CHICKENS_DISTANCE;
         }
         return (x/CHICKENS_DISTANCE) * CHICKENS_DISTANCE;
     }
+    // helper function to get ceiling x to distances between chickens
     private int getUpperClosestX(int x) {
         if (x < 0) {
             return (x/CHICKENS_DISTANCE) * CHICKENS_DISTANCE;

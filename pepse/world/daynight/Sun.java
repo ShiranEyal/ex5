@@ -11,6 +11,10 @@ import danogl.util.Vector2;
 import java.awt.*;
 
 
+/**
+ * Sun class, creates a GameObject representing
+ * the sun and manages it
+ */
 public class Sun {
     private static final float SUN_SIZE = 100f;
     private static final String SUN_TAG = "sun";
@@ -21,6 +25,15 @@ public class Sun {
     private static final float TRAJECTORY_X_RADIUS_FACTOR = 0.9f;
     private static final float TRAJECTORY_Y_RADIUS_FACTOR = 1.5f;
 
+    /**
+     * Create function that creates a new GameObject representing the sun,
+     * adds it to gameObjects and returns the newly created object.
+     * @param gameObjects all current GameObjects
+     * @param layer layer to create the sun in
+     * @param windowDimensions dimensions of the window
+     * @param cycleLength time of a single sun cycle
+     * @return
+     */
     public static GameObject create(GameObjectCollection gameObjects, int layer,
                                     Vector2 windowDimensions, float cycleLength) {
         GameObject sun = new GameObject(Vector2.ZERO, new Vector2(SUN_SIZE, SUN_SIZE),
@@ -37,6 +50,7 @@ public class Sun {
         return sun;
     }
 
+    //helper function to calculate the position of the sun
     private static Vector2 calcSunPosition(Vector2 windowDimensions, float angleInSky) {
         float horizontalRadius = (windowDimensions.x() / 2) * TRAJECTORY_X_RADIUS_FACTOR;
         float verticalRadius = (windowDimensions.y() / 2) * TRAJECTORY_Y_RADIUS_FACTOR;

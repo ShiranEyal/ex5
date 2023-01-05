@@ -8,11 +8,22 @@ import danogl.util.Vector2;
 
 import java.awt.*;
 
+/**
+ * Sky class, creates the sky background
+ */
 public class Sky {
     //sky color
     private static final Color BASIC_SKY_COLOR = Color.decode("#80C6E5");
     private static final String SKY_TAG = "sky";
 
+    /**
+     * Create function that creates a new GameObject representing the sky,
+     * adds it to gameObjects and returns the newly created object.
+     * @param gameObjects all current GameObjects
+     * @param windowDimensions the dimensions of the window
+     * @param skyLayer layer to create the sky in
+     * @return
+     */
     public static GameObject create(GameObjectCollection gameObjects,
                                     Vector2 windowDimensions, int skyLayer) {
         GameObject sky = new GameObject(

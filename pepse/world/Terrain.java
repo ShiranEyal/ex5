@@ -13,8 +13,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.function.DoubleUnaryOperator;
-import java.util.function.Function;
 
 /**
  * Terrain class, used to create ground blocks
@@ -100,6 +98,11 @@ public class Terrain {
         }
     }
 
+    /**
+     * removes all ground blocks in x range
+     * @param minX
+     * @param maxX
+     */
     public void removeBlocksInRange(int minX, int maxX) {
         for (int x = minX; x < maxX; x += Block.SIZE) {
             removeXBlocks(x);
@@ -110,7 +113,7 @@ public class Terrain {
     helper function to get closest x to starting x that is
     divisable by blockSize
      */
-    public int getClosestX(int minX) {
+    private int getClosestX(int minX) {
         if (minX < 0) {
             return Block.SIZE * (minX/Block.SIZE - 1);
         }

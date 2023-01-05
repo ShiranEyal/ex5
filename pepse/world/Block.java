@@ -5,9 +5,10 @@ import danogl.components.GameObjectPhysics;
 import danogl.gui.rendering.Renderable;
 import danogl.util.Vector2;
 
-import java.util.HashMap;
-import java.util.List;
-
+/**
+ * Block class, extends GameObject,
+ * represents a single static block in the game.
+ */
 public class Block extends GameObject {
     public static final int SIZE = 30;
 
